@@ -9,6 +9,7 @@ from pydbus.generic import signal
 
 from core import BluetoothAudioBridge
 
+startTheFakeBroker=False
 mqttServerUrl="127.0.0.1:1883"
 
 class TestFakeDbusBluezObject():
@@ -58,34 +59,36 @@ class TestFakeMethods():
 
     @asyncio.coroutine
     def startFakeBroker(self):
-        print("Start fake broker")
-        defaultMqtt = {}
-        defaultMqtt["listeners"]={}
-        defaultMqtt["listeners"]["default"]={"max-connections":5,"type":"tcp" }
-        defaultMqtt["listeners"]["my-tcp-1"]={"bind":mqttServerUrl}
-        defaultMqtt["timeout-disconnect-delay"]=2
-        defaultMqtt["auth"]={}
-        defaultMqtt["auth"]["plugins"]=["auth.anonymous"]
-        defaultMqtt["auth"]["allow-anonymous"]=True
-        defaultMqtt["auth"]["password-file"]=None
-        self.broker = Broker(defaultMqtt)
-        try:
-            yield from self.broker.start()
-        except Exception:
-            #workaround
-            pass
+        if startTheFakeBroker:
+           print("Start fake broker")
+           defaultMqtt = {}
+           defaultMqtt["listeners"]={}
+           defaultMqtt["listeners"]["default"]={"max-connections":5,"type":"tcp" }
+           defaultMqtt["listeners"]["my-tcp-1"]={"bind":mqttServerUrl}
+           defaultMqtt["timeout-disconnect-delay"]=2
+           defaultMqtt["auth"]={}
+           defaultMqtt["auth"]["plugins"]=["auth.anonymous"]
+           defaultMqtt["auth"]["allow-anonymous"]=True
+           defaultMqtt["auth"]["password-file"]=None
+           self.broker = Broker(defaultMqtt)
+           try:
+               yield from self.broker.start()
+           except Exception:
+               #workaround
+               pass
 
     @asyncio.coroutine
     def stopFakeBroker(self):
-        print("shutdown fake broker")
-        yield from self.broker.shutdown()
+        if startTheFakeBroker:
+           print("shutdown fake broker")
+           yield from self.broker.shutdown()
 
     async def sendMqttConnectMessage(self):
         print("connect MqttMessageEmitter")
         secondMqttClient=MQTTClient()
         connectionUrl="mqtt://"+mqttServerUrl
         await secondMqttClient.connect(connectionUrl)
-        await secondMqttClient.publish('a/b', b'TEST MESSAGE WITH QOS_0')
+        await secondMqttClient.publish('Broker/Test', b'Make Connection')
         await secondMqttClient.disconnect()
         print("connect message sent")
 
@@ -120,7 +123,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         #self.assertTrue(self.fakes.BridgeWorks)
 
-    def ttest_listDbusEntriesOnIncomingMessage(self):
+    def todotest_listDbusEntriesOnIncomingMessage(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
         self.loop.run_until_complete(asyncio.sleep(5))

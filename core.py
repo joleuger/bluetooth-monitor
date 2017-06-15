@@ -12,7 +12,7 @@ class BluetoothAudioBridge:
         self.DBusBluezObject=None
         self.MqttPath="/BluetoothAudioBridge"
         self.MqttServer="localhost:1883"
-        self.MqttUsername="user"
+        self.MqttUsername="vhost:username"
         self.MqttPassword="password"
         self.MqttClient=None
         self.MqttReceivingFuture=None
