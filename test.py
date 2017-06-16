@@ -3,14 +3,14 @@
 import asyncio, gbulb
 from pydbus import SessionBus
 import unittest
-from hbmqtt.client import MQTTClient, ClientException
 from hbmqtt.broker import Broker
 from pydbus.generic import signal
+import paho.mqtt.publish as mqttpublish
 
 from core import BluetoothAudioBridge
 
 startTheFakeBroker=False
-mqttServerUrl="127.0.0.1:1883"
+mqttServer="localhost"
 
 class TestFakeDbusBluezObject():
     dbus="""
@@ -64,7 +64,7 @@ class TestFakeMethods():
            defaultMqtt = {}
            defaultMqtt["listeners"]={}
            defaultMqtt["listeners"]["default"]={"max-connections":5,"type":"tcp" }
-           defaultMqtt["listeners"]["my-tcp-1"]={"bind":mqttServerUrl}
+           defaultMqtt["listeners"]["my-tcp-1"]={"bind":mqttServer}
            defaultMqtt["timeout-disconnect-delay"]=2
            defaultMqtt["auth"]={}
            defaultMqtt["auth"]["plugins"]=["auth.anonymous"]
@@ -84,12 +84,8 @@ class TestFakeMethods():
            yield from self.broker.shutdown()
 
     async def sendMqttConnectMessage(self):
-        print("connect MqttMessageEmitter")
-        secondMqttClient=MQTTClient()
-        connectionUrl="mqtt://"+mqttServerUrl
-        await secondMqttClient.connect(connectionUrl)
-        await secondMqttClient.publish('Broker/Test', b'Make Connection')
-        await secondMqttClient.disconnect()
+        mqttpublish.single("Broker/Test", payload="Make Connection", hostname=mqttServer
+, port=1883)
         print("connect message sent")
 
     async def startTestFakeDbusBluezObject(self):
@@ -105,7 +101,7 @@ class TestBridge(unittest.TestCase):
         self.fakes=TestFakeMethods()
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)
         self.bluetoothAudioBridge.DbusBluezPath = "BluetoothAudioBridge.FakeDbusObject"
-        self.bluetoothAudioBridge.MqttServer = mqttServerUrl
+        self.bluetoothAudioBridge.MqttServer = mqttServer
 
     def test_connectToMqttTestBroker(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
