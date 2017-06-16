@@ -10,7 +10,9 @@ import paho.mqtt.publish as mqttpublish
 from core import BluetoothAudioBridge
 
 startTheFakeBroker=False
-mqttServer="localhost"
+mqttServer="127.0.0.1"
+mqttUsername="username"
+mqttPassword="pw"
 
 class TestFakeDbusBluezObject():
     dbus="""
@@ -84,8 +86,8 @@ class TestFakeMethods():
            yield from self.broker.shutdown()
 
     async def sendMqttConnectMessage(self):
-        mqttpublish.single("Broker/Test", payload="Make Connection", hostname=mqttServer
-, port=1883)
+        mqttpublish.single("/BluetoothAudioBridge", payload="Make Connection", hostname=mqttServer
+, port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
         print("connect message sent")
 
     async def startTestFakeDbusBluezObject(self):
@@ -102,12 +104,15 @@ class TestBridge(unittest.TestCase):
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)
         self.bluetoothAudioBridge.DbusBluezPath = "BluetoothAudioBridge.FakeDbusObject"
         self.bluetoothAudioBridge.MqttServer = mqttServer
+        self.bluetoothAudioBridge.MqttUsername = mqttUsername
+        self.bluetoothAudioBridge.MqttPassword = mqttPassword
 
     def test_connectToMqttTestBroker(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
+        self.loop.run_until_complete(asyncio.sleep(1)) #must wait for a succesful connection
         self.loop.run_until_complete(self.fakes.sendMqttConnectMessage())
-        self.loop.run_until_complete(asyncio.sleep(5))
+        self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         self.loop.run_until_complete(self.fakes.stopFakeBroker())
         #self.assertTrue(self.fakes.BridgeWorks)
@@ -115,14 +120,14 @@ class TestBridge(unittest.TestCase):
     def test_connectToDbus(self):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezObject())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
-        self.loop.run_until_complete(asyncio.sleep(5))
+        self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         #self.assertTrue(self.fakes.BridgeWorks)
 
     def todotest_listDbusEntriesOnIncomingMessage(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
-        self.loop.run_until_complete(asyncio.sleep(5))
+        self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         self.loop.run_until_complete(self.fakes.stopFakeBroker())
         #self.assertTrue(self.fakes.BridgeWorks)
