@@ -55,9 +55,15 @@ class TestFakeDbusBluezObject():
 
 
 class TestFakeMethods():
-    def __init__(self):
+    def __init__(self,bluetoothAudioBridge):
         self.BridgeWorks = False
+        self.TestResult = False
         self.broker = None
+        self.bluetoothAudioBridge=bluetoothAudioBridge
+        self.bluetoothAudioBridge.DbusBluezPath = "BluetoothAudioBridge.FakeDbusObject"
+        self.bluetoothAudioBridge.MqttServer = mqttServer
+        self.bluetoothAudioBridge.MqttUsername = mqttUsername
+        self.bluetoothAudioBridge.MqttPassword = mqttPassword
 
     @asyncio.coroutine
     def startFakeBroker(self):
@@ -94,20 +100,25 @@ class TestFakeMethods():
         bus = SessionBus()
         bus.publish("BluetoothAudioBridge.FakeDbusObject", TestFakeDbusBluezObject())
 
+    async def cancelIn2Seconds(self):
+        await asyncio.sleep(2)
+        self.bluetoothAudioBridge.CancellationToken.set_result(True)
+
+    async def setResultInXSecondsCancelable(self,time):
+        (finished,result) = await self.bluetoothAudioBridge.awaitOrStop(asyncio.sleep(time))
+        if finished:
+            print("set Result to true")
+            self.TestResult=True
 
 class TestBridge(unittest.TestCase):
     def setUp(self):
         self.bus = SessionBus()
         gbulb.install()
         self.loop=asyncio.get_event_loop()
-        self.fakes=TestFakeMethods()
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)
-        self.bluetoothAudioBridge.DbusBluezPath = "BluetoothAudioBridge.FakeDbusObject"
-        self.bluetoothAudioBridge.MqttServer = mqttServer
-        self.bluetoothAudioBridge.MqttUsername = mqttUsername
-        self.bluetoothAudioBridge.MqttPassword = mqttPassword
+        self.fakes=TestFakeMethods(self.bluetoothAudioBridge)
 
-    def test_connectToMqttTestBroker(self):
+    def atest_connectToMqttTestBroker(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
         self.loop.run_until_complete(asyncio.sleep(1)) #must wait for a succesful connection
@@ -117,7 +128,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.stopFakeBroker())
         #self.assertTrue(self.fakes.BridgeWorks)
 
-    def test_connectToDbus(self):
+    def atest_connectToDbus(self):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezObject())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.loop.run_until_complete(asyncio.sleep(2))
@@ -132,7 +143,17 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.stopFakeBroker())
         #self.assertTrue(self.fakes.BridgeWorks)
         
+    def test_awaitOrStop1(self):
+        asyncio.ensure_future(self.fakes.cancelIn2Seconds())
+        asyncio.ensure_future(self.fakes.setResultInXSecondsCancelable(3))
+        self.loop.run_until_complete(asyncio.sleep(4))
+        self.assertFalse(self.fakes.TestResult)
 
+    def test_awaitOrStop2(self):
+        asyncio.ensure_future(self.fakes.cancelIn2Seconds())
+        asyncio.ensure_future(self.fakes.setResultInXSecondsCancelable(1))
+        self.loop.run_until_complete(asyncio.sleep(4))
+        self.assertTrue(self.fakes.TestResult)
 
 if __name__ == '__main__':
     unittest.main()

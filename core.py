@@ -19,13 +19,23 @@ class BluetoothAudioBridge:
         self.MqttMessageQueue=asyncio.Queue()
         self.MqttReceivingFuture=None
         self.Continue=True
+        self.CancellationToken=self.loop.create_future()
+
+    async def awaitOrStop(self,future):
+        done,pending = await asyncio.wait([self.CancellationToken, future],return_when=asyncio.FIRST_COMPLETED)
+        firstFinished=next(iter(done))
+        if firstFinished==self.CancellationToken:
+            #Note: pending tasks are still running
+            return (False,None)
+        #print(firstFinished)
+        #print(firstFinished.result())
+        return (True,firstFinished.result())
 
     def mqttReceivedAutoPair(self,message):
         print("MQTT: received auto pair")
 
     async def mqttProcessMessages(self):
         while self.Continue:
-            #done, _ = asyncio.wait([self.MqttReceivingFuture, self.MqttMessageQueue.get()],return_when=concurrent.futures.FIRST_COMPLETED)
             message=await self.MqttMessageQueue.get()
             print("MQTT: received message")
 
