@@ -52,6 +52,9 @@ class BluetoothAudioBridge:
     async def mqttProcessMessages(self):
         while self.Continue:
             message=await self.MqttMessageQueue.get()
+            if message==None:
+                self.trace(0,"stopping message proccessing")
+                return
             print("MQTT: received message")
             if message.startswith("Connect"):
                 self.mqttReceivedConnect(message)
@@ -82,6 +85,7 @@ class BluetoothAudioBridge:
             client.loop_write()
             client.loop_misc()
             self.MqttReceivingFuture.set_result(True)
+            asyncio.ensure_future(self.MqttMessageQueue.put(None)) # add final (empty) message into queue for a clean shutdown
         def on_disconnect(client, userdata, rc):
             if rc != 0:
                 print("Unexpected disconnection.")
