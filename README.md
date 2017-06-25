@@ -12,3 +12,6 @@ mount --bind /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-a
 cp -fR /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-audio-bridge/* /media/hd-storage/raspberry1/root/bluetooth-speaker-audio-bridge/
 
 run mosquitto in background when testing
+
+https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt
+https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt

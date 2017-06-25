@@ -24,6 +24,7 @@ class BluetoothAudioBridge:
         self.mqttReceivedConnect=self.makeConnect
         self.mqttReceivedPairAndTrust=self.makePairAndTrust
         self.mqttReceivedScan=self.makeScan
+        self.scanProcesses=0
 
 
     def trace(self,level,msg):
@@ -31,6 +32,7 @@ class BluetoothAudioBridge:
            print(msg)
 
     async def awaitOrStop(self,future):
+        # currently unused
         done,pending = await asyncio.wait([self.CancellationToken, future],return_when=asyncio.FIRST_COMPLETED)
         firstFinished=next(iter(done))
         if firstFinished==self.CancellationToken:
@@ -47,7 +49,15 @@ class BluetoothAudioBridge:
         print("MQTT: received pair and trust")
 
     def makeScan(self,message):
+        self.scanProcesses=self.scanProcesses+1
         print("MQTT: received scan")
+        asyncio.ensure_future(self.stopScanningIn30Seconds)
+
+    async def stopScanningIn30Seconds(self):
+        await asyncio.sleep(30)
+        self.scanProcesses=self.scanProcesses-1
+        if (self.scanProcesses==0):
+            self.trace(2,"stop scanning for devices")
 
     async def mqttProcessMessages(self):
         while self.Continue:

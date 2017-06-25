@@ -14,49 +14,107 @@ mqttServer="127.0.0.1"
 mqttUsername="username"
 mqttPassword="pw"
 
-class TestFakeDbusBluezObject():
+class TestFakeDbusBluezAdapter():
     dbus="""
        <node>
-         <interface name='BluetoothAudioBridge.FakeDbusBluezObject'>
-           <method name='EchoString'>
-             <arg type='s' name='a' direction='in'/>
-             <arg type='s' name='response' direction='out'/>
+         <interface name='BluetoothAudioBridge.FakeDbusBluezObject.Adapter1'>
+           <method name='StartDiscovery'>
            </method>
-           <method name='OutputAnything'>
-             <arg type='s' name='response' direction='out'/>
+           <method name='StopDiscovery'>
            </method>
-           <property name="SomeProperty" type="s" access="readwrite">
-             <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+           <property name="Address" type="s" access="read">
            </property>
          </interface>
        </node>"""
 
-    def EchoString(self, s):
-        """returns whatever is passed to it"""
-        return s
+    def StartDiscovery(self):
+        """start discovery"""
+        print("startDiscovery")
+        self.fakes.TestResult=self.fakes.TestResult+1
 
-    def OutputAnything(self):
-        """returns something"""
-        return "something"
+    def StopDiscovery(self):
+        """stop discovery"""
+        print("stopDiscovery")
+        self.fakes.TestResult=self.fakes.TestResult+2
 
-    def __init__(self):
-        self._someProperty = "initial value"
+    def __init__(self,fakes):
+        self._address = "initial value"
+        self.fakes=fakes
   
     @property
-    def SomeProperty(self):
-        return self._someProperty
+    def Address(self):
+        return self._address
   
-    @SomeProperty.setter
-    def SomeProperty(self, value):
-        self._someProperty = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject", {"SomeProperty": self.SomeProperty}, [])
+    @Address.setter
+    def Address(self, value):
+        self._address = value
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Adapter1", {"Address": self._address}, [])
   
     PropertiesChanged = signal()
+
+class TestFakeDbusBluezDevice():
+    dbus="""
+       <node>
+         <interface name='BluetoothAudioBridge.FakeDbusBluezObject.Device1'>
+           <method name='Connect'>
+           </method>
+           <method name='Disconnect'>
+           </method>
+           <method name='Pair'>
+           </method>
+           <property name="Address" type="s" access="read">
+           </property>
+           <property name="Trusted" type="b" access="readwrite">
+           </property>
+         </interface>
+       </node>"""
+
+    def Connect(self):
+        """connect"""
+        print("connect")
+        self.fakes.TestResult=self.fakes.TestResult+1
+
+    def Disconnect(self):
+        """disconnect"""
+        print("disconnect")
+        self.fakes.TestResult=self.fakes.TestResult+2
+
+    def Pair(self):
+        """pair"""
+        print("pair")
+        self.fakes.TestResult=self.fakes.TestResult+4
+
+    def __init__(self,fakes):
+        self._address = "initial value"
+        self._trusted = false
+        self.fakes=fakes
+  
+    @property
+    def Address(self):
+        return self._address
+  
+    @Address.setter
+    def Address(self, value):
+        self._address = value
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Address": self._address}, [])
+  
+    @property
+    def Trusted(self):
+        self.fakes.TestResult=self.fakes.TestResult+8
+        return self._trusted
+
+    @Trusted.setter
+    def Trusted(self, value):
+        self._trusted = value
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Trusted": self._trusted}, [])
+
+    PropertiesChanged = signal()
+
 
 
 class TestFakeMethods():
     def __init__(self,bluetoothAudioBridge):
-        self.TestResult = False
+        self.TestResult = 0
         self.broker = None
         self.bluetoothAudioBridge=bluetoothAudioBridge
         self.bluetoothAudioBridge.DbusBluezPath = "BluetoothAudioBridge.FakeDbusObject"
@@ -93,7 +151,7 @@ class TestFakeMethods():
     def callerWithOneParameterWasCalled(self):
         def methodCall(parameter):
            print("parameter "+parameter)
-           self.TestResult=True
+           self.TestResult=1
         return methodCall
 
     async def sendMqttConnectMessage(self):
@@ -111,9 +169,9 @@ class TestFakeMethods():
 , port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
         print("scan message sent")
 
-    async def startTestFakeDbusBluezObject(self):
+    async def startTestFakeDbusBluezAdapter(self):
         bus = SessionBus()
-        bus.publish("BluetoothAudioBridge.FakeDbusObject", TestFakeDbusBluezObject())
+        bus.publish("BluetoothAudioBridge.FakeDbusObject", TestFakeDbusBluezAdapter(self))
 
     async def cancelIn2Seconds(self):
         await asyncio.sleep(2)
@@ -123,7 +181,9 @@ class TestFakeMethods():
         (finished,result) = await self.bluetoothAudioBridge.awaitOrStop(asyncio.sleep(time))
         if finished:
             print("set Result to true")
-            self.TestResult=True
+            self.TestResult=1
+
+
 
 class TestBridge(unittest.TestCase):
     def setUp(self):
@@ -133,7 +193,7 @@ class TestBridge(unittest.TestCase):
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)
         self.fakes=TestFakeMethods(self.bluetoothAudioBridge)
 
-    def test_connectToMqttTestBroker(self):
+    def atest_scanMessageSendToTestBrokerIsReceived(self):
         self.bluetoothAudioBridge.mqttReceivedScan=self.fakes.callerWithOneParameterWasCalled()
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
@@ -142,16 +202,17 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         self.loop.run_until_complete(self.fakes.stopFakeBroker())
-        self.assertTrue(self.fakes.TestResult)
+        self.assertEqual(self.fakes.TestResult,1)
 
-    def atest_connectToDbus(self):
-        self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezObject())
+    def test_listMockedDbusEntries(self):
+        self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter())
+        
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
-        self.loop.run_until_complete(asyncio.sleep(2))
+        self.loop.run_until_complete(asyncio.sleep(20))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         #self.assertTrue(self.fakes.BridgeWorks)
 
-    def atest_listMockedDbusEntriesOnIncomingMessage(self):
+    def atest_listMockedDbusEntriesOnScanMessage(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
         self.loop.run_until_complete(asyncio.sleep(2))
@@ -163,13 +224,13 @@ class TestBridge(unittest.TestCase):
         asyncio.ensure_future(self.fakes.cancelIn2Seconds())
         asyncio.ensure_future(self.fakes.setResultInXSecondsCancelable(3))
         self.loop.run_until_complete(asyncio.sleep(4))
-        self.assertFalse(self.fakes.TestResult)
+        self.assertEqual(self.fakes.TestResult,0)
 
     def atest_awaitOrStop2(self):
         asyncio.ensure_future(self.fakes.cancelIn2Seconds())
         asyncio.ensure_future(self.fakes.setResultInXSecondsCancelable(1))
         self.loop.run_until_complete(asyncio.sleep(4))
-        self.assertTrue(self.fakes.TestResult)
+        self.assertEqual(self.fakes.TestResult,1)
 
 if __name__ == '__main__':
     unittest.main()
