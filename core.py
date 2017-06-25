@@ -9,8 +9,9 @@ class BluetoothAudioBridge:
     def __init__(self, loop):
         self.loop = loop
         self.DbusPulseAudioPath=""
-        self.DbusBluezPath=""
+        self.DbusBluezPath="org.bluez"
         self.DBusBluezObject=None
+        self.DBusDiscoveredDevices={}
         self.MqttPath="/BluetoothAudioBridge"
         self.MqttServer="localhost"
         self.MqttUsername="vhost:username"
@@ -24,7 +25,9 @@ class BluetoothAudioBridge:
         self.mqttReceivedConnect=self.makeConnect
         self.mqttReceivedPairAndTrust=self.makePairAndTrust
         self.mqttReceivedScan=self.makeScan
-        self.scanProcesses=0
+        self.dbusBtDeviceDetected=self.btDeviceDetected
+        self.dbusBtDeviceRemoved=self.btDeviceRemoved
+        self.dbusScanProcesses=0
 
 
     def trace(self,level,msg):
@@ -111,14 +114,28 @@ class BluetoothAudioBridge:
         asyncio.ensure_future(mqttReceiving())
         print("registered on MQTT")
 
+    def btDeviceDetected(self,address):
+        print("device detected "+address)
+
+    def btDeviceRemoved(self,address):
+        print("device removed "+address)
+
+    async def lookForDbusChanges(self):
+       while self.Continue:
+           self.trace(3,"DBUS: wait for device")
+           self.dbusDeviceDetected("")
+           self.dbusDeviceRemoved("")
+           await asyncio.sleep(1)
+
     async def registerDbus(self):
         self.bus = SessionBus()
         print("registered on DBUS")
+        asyncio.ensure_future(self.lookForDbusChanges())
         
 
     async def register(self):
         await self.registerMqtt()
-        self.registerDBus()
+        await self.registerDBus()
 
     async def unregister(self):
         self.Continue=False

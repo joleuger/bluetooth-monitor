@@ -121,6 +121,7 @@ class TestFakeMethods():
         self.bluetoothAudioBridge.MqttServer = mqttServer
         self.bluetoothAudioBridge.MqttUsername = mqttUsername
         self.bluetoothAudioBridge.MqttPassword = mqttPassword
+        self.fakeDbusObject = None
 
     @asyncio.coroutine
     def startFakeBroker(self):
@@ -171,7 +172,18 @@ class TestFakeMethods():
 
     async def startTestFakeDbusBluezAdapter(self):
         bus = SessionBus()
-        bus.publish("BluetoothAudioBridge.FakeDbusObject", TestFakeDbusBluezAdapter(self))
+        if (self.fakeDbusObject):
+            self.fakeDbusObject.unpublish()
+        self.fakeDbusObject =  bus.publish(self.bluetoothAudioBridge.DbusBluezPath,("hci0", TestFakeDbusBluezAdapter(self)))
+
+    async def startTestFakeDbusBluezDevice(self):
+        bus = SessionBus
+        if (self.fakeDbusObject):
+            self.fakeDbusObject.unpublish()
+        self.fakeDbusObject =  bus.publish(self.bluetoothAudioBridge.DbusBluezPath,)
+        bus.publish(self.bluetoothAudioBridge.DbusBluezPath,
+             ("hci0", TestFakeDbusBluezAdapter(self))
+             ("hci0/dev_aa_12_00_41_aa_00", TestFakeDbusBluezDevice(self)))
 
     async def cancelIn2Seconds(self):
         await asyncio.sleep(2)
@@ -208,9 +220,18 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter())
         
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
-        self.loop.run_until_complete(asyncio.sleep(20))
+        self.loop.run_until_complete(asyncio.sleep(5))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         #self.assertTrue(self.fakes.BridgeWorks)
+
+
+    def test_detectMockedBluetoothDevice(self):
+        self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter())
+        
+        self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
+        self.loop.run_until_complete(asyncio.sleep(5))
+        self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
+
 
     def atest_listMockedDbusEntriesOnScanMessage(self):
         self.loop.run_until_complete(self.fakes.startFakeBroker())
