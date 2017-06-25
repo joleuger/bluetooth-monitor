@@ -11,4 +11,4 @@ https://stackoverflow.com/questions/34039588/asyncio-and-infinite-loop
 mount --bind /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-audio-bridge /media/hd-storage/raspberry1/root/bluetooth-speaker-audio-bridge/
 cp -fR /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-audio-bridge/* /media/hd-storage/raspberry1/root/bluetooth-speaker-audio-bridge/
 
-
+run mosquitto in background when testing

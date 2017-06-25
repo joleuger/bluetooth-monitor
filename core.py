@@ -20,6 +20,15 @@ class BluetoothAudioBridge:
         self.MqttReceivingFuture=None
         self.Continue=True
         self.CancellationToken=self.loop.create_future()
+        self.TraceLevel=0
+        self.mqttReceivedConnect=self.makeConnect
+        self.mqttReceivedPairAndTrust=self.makePairAndTrust
+        self.mqttReceivedScan=self.makeScan
+
+
+    def trace(self,level,msg):
+        if self.TraceLevel >= level:
+           print(msg)
 
     async def awaitOrStop(self,future):
         done,pending = await asyncio.wait([self.CancellationToken, future],return_when=asyncio.FIRST_COMPLETED)
@@ -31,27 +40,39 @@ class BluetoothAudioBridge:
         #print(firstFinished.result())
         return (True,firstFinished.result())
 
-    def mqttReceivedAutoPair(self,message):
-        print("MQTT: received auto pair")
+    def makeConnect(self,message):
+        print("MQTT: received connect")
+
+    def makePairAndTrust(self,message):
+        print("MQTT: received pair and trust")
+
+    def makeScan(self,message):
+        print("MQTT: received scan")
 
     async def mqttProcessMessages(self):
         while self.Continue:
             message=await self.MqttMessageQueue.get()
             print("MQTT: received message")
+            if message.startswith("Connect"):
+                self.mqttReceivedConnect(message)
+            if message.startswith("Pair and trust"):
+                self.mqttReceivedConnect(message)
+            if message.startswith("Scan"):
+                self.mqttReceivedScan(message)
 
     async def registerMqtt(self):
         def on_connect(client, userdata, flags, rc):
             print("Connected with result code "+str(rc))
             # Subscribing in on_connect() means that if we lose the connection and
             # reconnect then subscriptions will be renewed.
-            client.subscribe("/BluetoothAudioBridge")
+            client.subscribe("/BluetoothAudioBridge/commands")
         def on_message(client, userdata, msg):
             print(msg.topic+" "+str(msg.payload))
             msgDecoded=msg.payload.decode("utf-8")
             asyncio.ensure_future(self.MqttMessageQueue.put(msgDecoded))
         async def mqttReceiving():
             while self.Continue:
-                print("MQTT: wait for message")
+                self.trace(3,"MQTT: wait for message")
                 client.loop_read()
                 client.loop_write()
                 client.loop_misc()
