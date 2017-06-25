@@ -123,6 +123,13 @@ class BluetoothAudioBridge:
     async def lookForDbusChanges(self):
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
+           # bus = SystemBus()
+           # dbusNode = bus.get("org.freedesktop.systemd1","/org/freedesktop/systemd1/unit")
+           # dbusNodeXml = dbusNode.Introspect()
+           # xmlTree = ElementTree.fromstring(dbusNodeXml)
+           # for child in xmlTree:
+           #    if child.tag=="node":
+           #        print (child.attrib['name'])
            self.dbusDeviceDetected("")
            self.dbusDeviceRemoved("")
            await asyncio.sleep(1)
