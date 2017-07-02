@@ -1,17 +1,23 @@
 #!/usr/bin/python3
 
 from pydbus import SessionBus
+from pydbus import SystemBus
 import asyncio, gbulb
+from gi.repository.GLib import GError
 #from hbmqtt.client import MQTTClient, ClientException
 import paho.mqtt.client as mqtt
+from xml.etree import ElementTree
 
 class BluetoothAudioBridge:
     def __init__(self, loop):
         self.loop = loop
         self.DbusPulseAudioPath=""
-        self.DbusBluezPath="org.bluez"
-        self.DBusBluezObject=None
-        self.DBusDiscoveredDevices={}
+        self.DbusBluezOnSystemBus=True
+        self.DbusBluezBusName="org.bluez"
+        self.DbusBluezObjectPath="/org/bluez/hci0"
+        self.DbusBluezObject=None
+        self.DbusBluezReceivingFuture=None
+        self.DbusBluezDiscoveredDevices={}
         self.MqttPath="/BluetoothAudioBridge"
         self.MqttServer="localhost"
         self.MqttUsername="vhost:username"
@@ -123,20 +129,39 @@ class BluetoothAudioBridge:
     async def lookForDbusChanges(self):
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
-           # bus = SystemBus()
-           # dbusNode = bus.get("org.freedesktop.systemd1","/org/freedesktop/systemd1/unit")
-           # dbusNodeXml = dbusNode.Introspect()
-           # xmlTree = ElementTree.fromstring(dbusNodeXml)
-           # for child in xmlTree:
-           #    if child.tag=="node":
-           #        print (child.attrib['name'])
-           self.dbusDeviceDetected("")
-           self.dbusDeviceRemoved("")
+           try:
+               self.trace(0,"DBUS: connect to "+self.DbusBluezBusName+ " " +self.DbusBluezObjectPath)
+               dbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,self.DbusBluezObjectPath)
+               dbusNodeXml = dbusNode.Introspect()
+               xmlTree = ElementTree.fromstring(dbusNodeXml)
+               foundDevices = {}
+               for child in xmlTree:
+                   if child.tag=="node":
+                       deviceName = child.attrib['name']
+                       foundDevices[deviceName]=True
+                       print (child.attrib['name'])
+               for oldDevice in self.DbusBluezDiscoveredDevices:
+                   if oldDevice not in foundDevices:
+                       self.dbusBtDeviceRemoved(oldDevice)
+               for foundDevice in foundDevices:
+                   if foundDevice not in self.DbusBluezDiscoveredDevices:
+                       self.dbusBtDeviceDetected(foundDevice)
+           #except KeyError:
+           #    print("dbus error")
+           except GError as err:
+               print("dbus error")
+               print (err)
            await asyncio.sleep(1)
+       print("finished looking for dbus changes")
+       self.DbusBluezReceivingFuture.set_result(True)
 
     async def registerDbus(self):
-        self.bus = SessionBus()
-        print("registered on DBUS")
+        if self.DbusBluezOnSystemBus:
+           self.DbusBluezObject = SystemBus()
+        else:
+           self.DbusBluezObject = SessionBus()
+        print("listening on DBUS")
+        self.DbusBluezReceivingFuture=self.loop.create_future()
         asyncio.ensure_future(self.lookForDbusChanges())
         
 
@@ -146,6 +171,9 @@ class BluetoothAudioBridge:
 
     async def unregister(self):
         self.Continue=False
+        if (self.DbusBluezReceivingFuture):
+            await self.DbusBluezReceivingFuture
+        self.DbusBluezReceivingFuture = None
         if (self.MqttReceivingFuture):
             await self.MqttReceivingFuture
         self.MqttReceivingFuture=None
