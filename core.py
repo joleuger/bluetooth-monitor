@@ -139,11 +139,16 @@ class BluetoothAudioBridge:
                    if child.tag=="node":
                        deviceName = child.attrib['name']
                        foundDevices[deviceName]=True
+               removeDevices=[]
                for oldDevice in self.DbusBluezDiscoveredDevices:
                    if oldDevice not in foundDevices:
+                       removeDevices.append(oldDevice)
                        self.dbusBtDeviceRemoved(oldDevice)
+               for removeDevice in removeDevices:
+                   self.DbusBluezDiscoveredDevices.pop(removeDevice,None)
                for foundDevice in foundDevices:
                    if foundDevice not in self.DbusBluezDiscoveredDevices:
+                       self.DbusBluezDiscoveredDevices[foundDevice]=True
                        self.dbusBtDeviceDetected(foundDevice)
            #except KeyError:
            #    print("dbus error")

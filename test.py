@@ -156,7 +156,7 @@ class TestFakeMethods():
     def callerWithOneParameterWasCalled(self):
         def methodCall(parameter):
            print("parameter "+parameter)
-           self.TestResult=1
+           self.TestResult=self.TestResult+1
         return methodCall
 
     async def sendMqttConnectMessage(self):
@@ -255,6 +255,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
+        self.assertEqual(self.fakes.TestResult,1)
 
 
     def atest_listMockedDbusEntriesOnScanMessage(self):
