@@ -191,6 +191,12 @@ class TestFakeMethods():
         self.fakeDbusObject = self.bus.publish(self.bluetoothAudioBridge.DbusBluezBusName,
              ("hci0", TestFakeDbusBluezAdapter(self)),
              ("hci0/dev_aa_12_00_41_aa_00", TestFakeDbusBluezDevice(self)))
+        await asyncio.sleep(0.5)
+
+    async def stopTestFakeDbusBluezAdapterAndDevice(self):
+        if (self.fakeDbusObject):
+            self.fakeDbusObject.unpublish()
+            await asyncio.sleep(0.5)
 
     async def cancelIn2Seconds(self):
         await asyncio.sleep(2)
@@ -235,9 +241,10 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
+        self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
         self.assertEqual(self.fakes.TestResult,1)
 
-    def atest_removeMockedBluetoothDevice(self):
+    def test_removeMockedBluetoothDevice(self):
         self.bluetoothAudioBridge.dbusBtDeviceRemoved=self.fakes.callerWithOneParameterWasCalled()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
@@ -246,6 +253,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter()) 
         self.loop.run_until_complete(asyncio.sleep(2))
+        self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
 
 
