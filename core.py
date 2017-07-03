@@ -52,14 +52,14 @@ class BluetoothAudioBridge:
         return (True,firstFinished.result())
 
     def makeConnect(self,message):
-        print("MQTT: received connect")
+        self.trace(0,"MQTT: received connect")
 
     def makePairAndTrust(self,message):
-        print("MQTT: received pair and trust")
+        self.trace(0,"MQTT: received pair and trust")
 
     def makeScan(self,message):
         self.scanProcesses=self.scanProcesses+1
-        print("MQTT: received scan")
+        self.trace(0,"MQTT: received scan")
         asyncio.ensure_future(self.stopScanningIn30Seconds)
 
     async def stopScanningIn30Seconds(self):
@@ -74,7 +74,7 @@ class BluetoothAudioBridge:
             if message==None:
                 self.trace(0,"stopping message proccessing")
                 return
-            print("MQTT: received message")
+            self.trace(0,"MQTT: received message")
             if message.startswith("Connect"):
                 self.mqttReceivedConnect(message)
             if message.startswith("Pair and trust"):
@@ -84,12 +84,12 @@ class BluetoothAudioBridge:
 
     async def registerMqtt(self):
         def on_connect(client, userdata, flags, rc):
-            print("Connected with result code "+str(rc))
+            self.trace(0,"Connected with result code "+str(rc))
             # Subscribing in on_connect() means that if we lose the connection and
             # reconnect then subscriptions will be renewed.
             client.subscribe("/BluetoothAudioBridge/commands")
         def on_message(client, userdata, msg):
-            print(msg.topic+" "+str(msg.payload))
+            self.trace(0,msg.topic+" "+str(msg.payload))
             msgDecoded=msg.payload.decode("utf-8")
             asyncio.ensure_future(self.MqttMessageQueue.put(msgDecoded))
         async def mqttReceiving():
@@ -107,7 +107,7 @@ class BluetoothAudioBridge:
             asyncio.ensure_future(self.MqttMessageQueue.put(None)) # add final (empty) message into queue for a clean shutdown
         def on_disconnect(client, userdata, rc):
             if rc != 0:
-                print("Unexpected disconnection.")
+                self.trace(0,"Unexpected disconnection.")
         client = mqtt.Client(client_id="thing-bluetoothbridge",)
         client.on_connect = on_connect
         client.on_message = on_message
@@ -118,13 +118,13 @@ class BluetoothAudioBridge:
         self.MqttReceivingFuture=self.loop.create_future()
         asyncio.ensure_future(self.mqttProcessMessages())
         asyncio.ensure_future(mqttReceiving())
-        print("registered on MQTT")
+        self.trace(0,"registered on MQTT")
 
     def btDeviceDetected(self,address):
-        print("device detected "+address)
+        self.trace(0,"device detected "+address)
 
     def btDeviceRemoved(self,address):
-        print("device removed "+address)
+        self.trace(0,"device removed "+address)
 
     async def lookForDbusChanges(self):
        while self.Continue:
@@ -139,7 +139,6 @@ class BluetoothAudioBridge:
                    if child.tag=="node":
                        deviceName = child.attrib['name']
                        foundDevices[deviceName]=True
-                       print (child.attrib['name'])
                for oldDevice in self.DbusBluezDiscoveredDevices:
                    if oldDevice not in foundDevices:
                        self.dbusBtDeviceRemoved(oldDevice)
@@ -149,8 +148,8 @@ class BluetoothAudioBridge:
            #except KeyError:
            #    print("dbus error")
            except GError as err:
-               print("dbus error")
-               print (err)
+               self.trace(0,"dbus error")
+               self.trace (0,err)
            await asyncio.sleep(1)
        print("finished looking for dbus changes")
        self.DbusBluezReceivingFuture.set_result(True)
@@ -160,7 +159,7 @@ class BluetoothAudioBridge:
            self.DbusBluezObject = SystemBus()
         else:
            self.DbusBluezObject = SessionBus()
-        print("listening on DBUS")
+        self.trace(0,"listening on DBUS")
         self.DbusBluezReceivingFuture=self.loop.create_future()
         asyncio.ensure_future(self.lookForDbusChanges())
         
