@@ -212,7 +212,6 @@ class TestFakeMethods():
 
 class TestBridge(unittest.TestCase):
     def setUp(self):
-        self.bus = SessionBus()
         gbulb.install()
         self.loop=asyncio.get_event_loop()
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)

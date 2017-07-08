@@ -5,6 +5,8 @@ from pydbus import SessionBus
 import os
 import yaml
 import argparse
+from core import BluetoothAudioBridge
+import signal
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", help="path configuration file (yaml format)")
@@ -45,4 +47,20 @@ if not appConfigFilePath==None:
 #gbulb.install()
 #asyncio.get_event_loop().run_forever()
 
+def ask_exit(signame):
+    print("got signal %s: exit" % signame)
+    #loop.run_until_complete(bluetoothAudioBridge.unregister())
+    loop.stop()
 
+gbulb.install()
+loop=asyncio.get_event_loop()
+bluetoothAudioBridge=BluetoothAudioBridge(loop)
+
+#register termination handler
+for signame in ('SIGINT', 'SIGTERM'):
+    loop.add_signal_handler(getattr(signal, signame), lambda : ask_exit(signame))
+
+#register dbus
+loop.run_until_complete(bluetoothAudioBridge.registerDbus())
+loop.run_forever()
+loop.close()
