@@ -27,7 +27,7 @@ elif os.getenv("XDG_CONFIG_HOME"):
 appConfig={}
 if not appConfigFilePath==None:
   if os.path.isfile(appConfigFilePath):
-    configFile=file(appConfigFilePath,"r")
+    configFile=open(appConfigFilePath,"r")
     appConfig=yaml.load(configFile)
   else:
     print("Configuration file not found. Using default configuration")
@@ -38,25 +38,30 @@ if "useMqtt" not in  appConfig:
   appConfig["useMqtt"]=False
 if "updateConfig" not in appConfig:
   appConfig["updateConfig"]=False
+print("use mqtt: "+str(appConfig["useMqtt"]))
+print("update configuration file: "+str(appConfig["updateConfig"]))
+
+def save_config():
+  if (not appConfigFilePath==None) and appConfig["updateConfig"]:
+    print("update settings file")
+    configFile=open(appConfigFilePath,"w")
+    yaml.dump(appConfig,configFile)
 
 
-if not appConfigFilePath==None:
-  configFile=file(appConfigFilePath,"w")
-  yaml.dump(appConfig,configFile)
-
-#gbulb.install()
-#asyncio.get_event_loop().run_forever()
-
-def ask_exit(signame):
-    print("got signal %s: exit" % signame)
-    #loop.run_until_complete(bluetoothAudioBridge.unregister())
-    loop.stop()
-
+# create event loop
 gbulb.install()
 loop=asyncio.get_event_loop()
+
+# create instance of bluetooth audio bridge main class
 bluetoothAudioBridge=BluetoothAudioBridge(loop)
 
 #register termination handler
+def ask_exit(signame):
+    print("got signal %s: exit" % signame)
+    #loop.run_until_complete(bluetoothAudioBridge.unregister())
+    save_config()
+    loop.stop()
+    # everything after this point will not be reached
 for signame in ('SIGINT', 'SIGTERM'):
     loop.add_signal_handler(getattr(signal, signame), lambda : ask_exit(signame))
 
@@ -64,3 +69,5 @@ for signame in ('SIGINT', 'SIGTERM'):
 loop.run_until_complete(bluetoothAudioBridge.registerDbus())
 loop.run_forever()
 loop.close()
+
+print("Finished") # this point will not be reached
