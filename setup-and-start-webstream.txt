@@ -12,7 +12,7 @@ login as audioclient using e.g. "machinectl shell --uid audioclient"
 
 now you can run a web stream with gst-launch
 
-> gst-launch-1.0 -v playbin uri=http://mp3ad.egofm.c.nmdn.net/ps-egofm_192/livestream.mp3 output="pulsesink device=bluez_sink.A0_E9_DB_10_3F_B9.a2dp_sink" volume=0.1
+> gst-launch-1.0 -v playbin uri=http://mp3ad.egofm.c.nmdn.net/ps-egofm_192/livestream.mp3 audio-sink="pulsesink device=bluez_sink.A0_E9_DB_10_3F_B9.a2dp_sink" volume=0.1
 
 you can adapt this string for the bluetooth monitor configuration:
  bluetoothDevices:

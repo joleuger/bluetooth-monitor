@@ -1,0 +1,11 @@
+[Unit]
+Description=Bluetooth monitor
+
+[Service]
+Type=simple
+#StandardOutput=null
+
+ExecStart=/usr/bin/python3 main.py --config /home/audioclient/bluetooth-monitor/config.yaml
+
+[Install]
+WantedBy=default.target

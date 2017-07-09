@@ -20,6 +20,9 @@ udevadm trigger
 
 #copy script into user directory
 mkdir -p /home/audioclient/bluetooth-monitor
+cp * -Rf /home/audioclient/bluetooth-monitor
+cp /home/audioclient/bluetooth-monitor/example-config.yaml /home/audioclient/bluetooth-monitor/config.yaml
+chown -R audioclient:audioclient /home/audioclient/
 
 #enable dbus and pulseaudio for user
 mkdir -p /home/audioclient/.config/systemd/user/sockets.target.wants
@@ -27,7 +30,15 @@ ln -s /usr/lib/systemd/user/dbus.socket /home/audioclient/.config/systemd/user/s
 ln -s /usr/lib/systemd/user/pulseaudio.socket /home/audioclient/.config/systemd/user/sockets.target.wants
 mkdir -p /home/audioclient/.config/systemd/user/default.target.wants
 ln -s /usr/lib/systemd/user/pulseaudio.service /home/audioclient/.config/systemd/user/default.target.wants/pulseaudio.service
+cp contrib/bluetooth-monitor.service /home/audioclient/.config/systemd/user
 chown -R audioclient:audioclient /home/audioclient/
 
 # now we can use system
 loginctl enable-linger audioclient
+
+# you can login with user audioclient with
+#    > machinectl shell --uid audioclient"
+# then, you can enable bluetooth monitor
+#    > systemctl --user enable --now bluetooth-monitor
+# when you change the configuration, do not forget to
+#    > systemctl --user restart bluetooth-monitor
