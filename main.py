@@ -38,8 +38,19 @@ if "useMqtt" not in  appConfig:
   appConfig["useMqtt"]=False
 if "updateConfig" not in appConfig:
   appConfig["updateConfig"]=False
+if "bluetoothDevices" not in appConfig:
+  appConfig["bluetoothDevices"]={}
+for device,deviceConfig in appConfig["bluetoothDevices"].items():
+  if "onConnectCommand" not in deviceConfig:
+    deviceConfig["onConnectCommand"]=None
+  if "onDisconnectCommand" not in deviceConfig:
+    deviceConfig["onDisconnectCommand"]=None
 print("use mqtt: "+str(appConfig["useMqtt"]))
 print("update configuration file: "+str(appConfig["updateConfig"]))
+for device,deviceConfig in appConfig["bluetoothDevices"].items():
+  print("bluetooth device (must be in upper case form, e.g. A0_14_...): "+str(device))
+  print("onConnectCommand: "+str(deviceConfig["onConnectCommand"]))
+  print("onDisconnectCommand: "+str(deviceConfig["onDisconnectCommand"]))
 
 def save_config():
   if (not appConfigFilePath==None) and appConfig["updateConfig"]:

@@ -18,6 +18,7 @@ class BluetoothAudioBridge:
         self.DbusBluezObject=None
         self.DbusBluezReceivingFuture=None
         self.DbusBluezDiscoveredDevices={}
+        self.DbusBluezConnectedDevices={}
         self.MqttPath="/BluetoothAudioBridge"
         self.MqttServer="localhost"
         self.MqttUsername="vhost:username"
@@ -33,6 +34,8 @@ class BluetoothAudioBridge:
         self.mqttReceivedScan=self.makeScan
         self.dbusBtDeviceDetected=self.btDeviceDetected
         self.dbusBtDeviceRemoved=self.btDeviceRemoved
+        self.dbusBtDeviceConnected=self.btDeviceConnected
+        self.dbusBtDeviceDisconnected=self.btDeviceDisconnected
         self.dbusScanProcesses=0
 
 
@@ -126,6 +129,12 @@ class BluetoothAudioBridge:
     def btDeviceRemoved(self,address):
         self.trace(0,"device removed "+address)
 
+    def btDeviceConnected(self,address):
+        self.trace(0,"device connected "+address)
+
+    def btDeviceDisconnected(self,address):
+        self.trace(0,"device disconnected "+address)
+
     async def lookForDbusChanges(self):
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
@@ -134,10 +143,12 @@ class BluetoothAudioBridge:
                dbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,self.DbusBluezObjectPath)
                dbusNodeXml = dbusNode.Introspect()
                xmlTree = ElementTree.fromstring(dbusNodeXml)
+               # first check found <-> not found
                foundDevices = {}
                for child in xmlTree:
                    if child.tag=="node":
-                       deviceName = child.attrib['name']
+                       deviceNameWithPrefix = child.attrib['name']
+                       deviceName = deviceNameWithPrefix[4:]
                        foundDevices[deviceName]=True
                removeDevices=[]
                for oldDevice in self.DbusBluezDiscoveredDevices:
@@ -150,6 +161,27 @@ class BluetoothAudioBridge:
                    if foundDevice not in self.DbusBluezDiscoveredDevices:
                        self.DbusBluezDiscoveredDevices[foundDevice]=True
                        self.dbusBtDeviceDetected(foundDevice)
+               # now check disconnect <-> connect
+               connectedDevices = {}
+               for foundDevice in foundDevices:
+                   devicePath = self.DbusBluezObjectPath+ "/dev_"+foundDevice
+                   print ("...1")
+                   deviceDbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,devicePath)
+                   print ("...1")
+                   isConnected = await self.loop.run_in_executor(None, lambda: deviceDbusNode.Connected)
+                   if isConnected :
+                      connectedDevices[foundDevice]=True
+               disconnectedDevices=[]
+               for alreadyConnectedDevice in self.DbusBluezConnectedDevices:
+                   if alreadyConnectedDevice not in connectedDevices:
+                      removeDevices.append(alreadyConnectedDevice)
+                      self.dbusBtDeviceDisconnected(alreadyConnectedDevice)
+               for disconnectedDevice in disconnectedDevices:
+                   self.DbusBluezConnectedDevices.pop(disconnectedDevice,None)
+               for connectedDevice in connectedDevices:
+                   if connectedDevice not in self.DbusBluezConnectedDevices:
+                      self.DbusBluezConnectedDevices[connectedDevice]=True
+                      self.dbusBtDeviceConnected(connectedDevice)
            #except KeyError:
            #    print("dbus error")
            except GError as err:
@@ -171,7 +203,7 @@ class BluetoothAudioBridge:
 
     async def register(self):
         await self.registerMqtt()
-        await self.registerDBus()
+        await self.registerDbus()
 
     async def unregister(self):
         self.Continue=False
