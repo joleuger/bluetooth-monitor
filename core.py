@@ -159,7 +159,7 @@ class BluetoothAudioBridge:
         self.trace(0,"device connected "+address)
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
-            os.killpg(os.getpgid(pid), signal.SIGTERM)
+            os.killpg(os.getpgid(processGroupToKill), signal.SIGTERM)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
@@ -173,7 +173,7 @@ class BluetoothAudioBridge:
         self.trace(0,"device disconnected "+address)
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
-            os.killpg(os.getpgid(pid), signal.SIGTERM)
+            os.killpg(os.getpgid(processGroupToKill), signal.SIGTERM)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
