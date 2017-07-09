@@ -1,4 +1,1 @@
-bluetoothDevices:
-  A0_E9_DB_10_3F_B9: {onConnectCommand: echo $DEVICE connected, onDisconnectCommand: null}
-updateConfig: true
-useMqtt: false
+{updateConfig: true, useMqtt: false, bluetoothDevices: {"A0_E9_DB_10_3F_B9": {onConnectCommand: "echo $DEVICE connected", onDisconnectCommand: null}}}

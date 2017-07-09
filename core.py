@@ -1,5 +1,25 @@
 #!/usr/bin/python3
 
+# Copyright (c) 2017 Johannes Leupolz
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 from pydbus import SessionBus
 from pydbus import SystemBus
 import asyncio, gbulb
@@ -7,6 +27,7 @@ from gi.repository.GLib import GError
 #from hbmqtt.client import MQTTClient, ClientException
 import paho.mqtt.client as mqtt
 from xml.etree import ElementTree
+import subprocess
 
 class BluetoothAudioBridge:
     def __init__(self, loop):
@@ -37,6 +58,8 @@ class BluetoothAudioBridge:
         self.dbusBtDeviceConnected=self.btDeviceConnected
         self.dbusBtDeviceDisconnected=self.btDeviceDisconnected
         self.dbusScanProcesses=0
+        self.btDeviceConfig = {}
+        self.btRunningProcesses = {}
 
 
     def trace(self,level,msg):
@@ -56,6 +79,7 @@ class BluetoothAudioBridge:
 
     def makeConnect(self,message):
         self.trace(0,"MQTT: received connect")
+        
 
     def makePairAndTrust(self,message):
         self.trace(0,"MQTT: received pair and trust")
@@ -131,9 +155,29 @@ class BluetoothAudioBridge:
 
     def btDeviceConnected(self,address):
         self.trace(0,"device connected "+address)
+        if address in self.btRunningProcesses:
+            self.btRunningProcesses[address].terminate()
+            self.btRunningProcesses.pop(address,None)
+        if address in self.btDeviceConfig:
+           deviceConfig = self.btDeviceConfig[address]
+           if "onConnectCommand" in deviceConfig:
+              command=deviceConfig["onConnectCommand"]
+              if command:
+                commandToExecute=command.replace("$DEVICE",address)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True)
 
     def btDeviceDisconnected(self,address):
         self.trace(0,"device disconnected "+address)
+        if address in self.btRunningProcesses:
+            self.btRunningProcesses[address].terminate()
+            self.btRunningProcesses.pop(address,None)
+        if address in self.btDeviceConfig:
+           deviceConfig = self.btDeviceConfig[address]
+           if "onDisconnectCommand" in deviceConfig:
+              command=deviceConfig["onDisconnectCommand"]
+              if command:
+                commandToExecute=command.replace("$DEVICE",address)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True)
 
     async def lookForDbusChanges(self):
        while self.Continue:
@@ -165,9 +209,7 @@ class BluetoothAudioBridge:
                connectedDevices = {}
                for foundDevice in foundDevices:
                    devicePath = self.DbusBluezObjectPath+ "/dev_"+foundDevice
-                   print ("...1")
                    deviceDbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,devicePath)
-                   print ("...1")
                    isConnected = await self.loop.run_in_executor(None, lambda: deviceDbusNode.Connected)
                    if isConnected :
                       connectedDevices[foundDevice]=True

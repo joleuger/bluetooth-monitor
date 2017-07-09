@@ -1,18 +1,20 @@
-pip3 install pydbus
-pip3 install gbulb
-pip3 install hbmqtt
-pip3 install paho-mqtt
-pip3 install xdg
+Bluetooth monitor listens on D-Bus for connections of bluetooth devices.
+It can be used to automatically start a online radio stream when a bluetooth speaker connects to the computer.
 
-https://github.com/tleyden/bluecast
-https://gist.github.com/boulund/8949499e17493e1c00db
-https://kofler.info/bluetooth-konfiguration-im-terminal-mit-bluetoothctl/
-https://stackoverflow.com/questions/34039588/asyncio-and-infinite-loop
+References used for the implementation
+- https://github.com/tleyden/bluecast
+- https://gist.github.com/boulund/8949499e17493e1c00db
+- https://kofler.info/bluetooth-konfiguration-im-terminal-mit-bluetoothctl/
+- https://stackoverflow.com/questions/34039588/asyncio-and-infinite-loop
+- https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt
+- https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt
 
-mount --bind /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-audio-bridge /media/hd-storage/raspberry1/root/bluetooth-speaker-audio-bridge/
-cp -fR /root/johannes_heimautomatisierung/thingvarious/bluetooth-speaker-audio-bridge/* /media/hd-storage/raspberry1/root/bluetooth-speaker-audio-bridge/
+# Tests
 
-run mosquitto in background when testing
+Run mosquitto in background when testing mqtt functionality
 
-https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt
-https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt
+# Roadmap
+- [X] Connecting to a MQTT-Server
+- [ ] Remote control via MQTT
+- [ ] Status reports via MQTT
+

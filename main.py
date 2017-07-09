@@ -1,5 +1,25 @@
 #!/usr/bin/python3
 
+# Copyright (c) 2017 Johannes Leupolz
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import asyncio, gbulb
 from pydbus import SessionBus
 import os
@@ -26,6 +46,7 @@ elif os.getenv("XDG_CONFIG_HOME"):
 
 appConfig={}
 if not appConfigFilePath==None:
+  print("Try to use configuration file "+appConfigFilePath)
   if os.path.isfile(appConfigFilePath):
     configFile=open(appConfigFilePath,"r")
     appConfig=yaml.load(configFile)
@@ -65,6 +86,7 @@ loop=asyncio.get_event_loop()
 
 # create instance of bluetooth audio bridge main class
 bluetoothAudioBridge=BluetoothAudioBridge(loop)
+bluetoothAudioBridge.btDeviceConfig = appConfig["bluetoothDevices"]
 
 #register termination handler
 def ask_exit(signame):
@@ -79,6 +101,8 @@ for signame in ('SIGINT', 'SIGTERM'):
 #register dbus
 loop.run_until_complete(bluetoothAudioBridge.registerDbus())
 loop.run_forever()
-loop.close()
 
-print("Finished") # this point will not be reached
+
+# this point will never be reached
+loop.close()
+print("Finished") 
