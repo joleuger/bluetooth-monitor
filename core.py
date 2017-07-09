@@ -216,7 +216,7 @@ class BluetoothAudioBridge:
                disconnectedDevices=[]
                for alreadyConnectedDevice in self.DbusBluezConnectedDevices:
                    if alreadyConnectedDevice not in connectedDevices:
-                      removeDevices.append(alreadyConnectedDevice)
+                      disconnectedDevices.append(alreadyConnectedDevice)
                       self.dbusBtDeviceDisconnected(alreadyConnectedDevice)
                for disconnectedDevice in disconnectedDevices:
                    self.DbusBluezConnectedDevices.pop(disconnectedDevice,None)

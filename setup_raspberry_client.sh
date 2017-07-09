@@ -5,7 +5,7 @@ apt-get -qy install pulseaudio gstreamer1.0-plugins-base gstreamer1.0-plugins-go
 apt-get -qy install bluetooth bluez bluez-tools bluez-firmware pulseaudio-module-bluetooth
 apt-get -qy install dbus-user-session
 apt-get -qy install systemd-container
-apt-get -qy install python3-pip
+apt-get -qy install python3-pip python3-yaml
 
 pip3 install pydbus
 pip3 install gbulb
