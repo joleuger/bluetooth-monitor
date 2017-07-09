@@ -28,6 +28,8 @@ from gi.repository.GLib import GError
 import paho.mqtt.client as mqtt
 from xml.etree import ElementTree
 import subprocess
+import os
+import signal
 
 class BluetoothAudioBridge:
     def __init__(self, loop):
@@ -156,7 +158,8 @@ class BluetoothAudioBridge:
     def btDeviceConnected(self,address):
         self.trace(0,"device connected "+address)
         if address in self.btRunningProcesses:
-            self.btRunningProcesses[address].terminate()
+            processGroupToKill=self.btRunningProcesses[address].pid
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
@@ -164,12 +167,13 @@ class BluetoothAudioBridge:
               command=deviceConfig["onConnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, preexec_fn=os.setsid)
 
     def btDeviceDisconnected(self,address):
         self.trace(0,"device disconnected "+address)
         if address in self.btRunningProcesses:
-            self.btRunningProcesses[address].terminate()
+            processGroupToKill=self.btRunningProcesses[address].pid
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
@@ -177,7 +181,7 @@ class BluetoothAudioBridge:
               command=deviceConfig["onDisconnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, preexec_fn=os.setsid)
 
     async def lookForDbusChanges(self):
        while self.Continue:
