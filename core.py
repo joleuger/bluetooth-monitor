@@ -149,13 +149,13 @@ class BluetoothAudioBridge:
         asyncio.ensure_future(mqttReceiving())
         self.trace(0,"registered on MQTT")
 
-    def btDeviceDetected(self,address):
+    async def btDeviceDetected(self,address):
         self.trace(0,"device detected "+address)
 
-    def btDeviceRemoved(self,address):
+    async def btDeviceRemoved(self,address):
         self.trace(0,"device removed "+address)
 
-    def btDeviceConnected(self,address):
+    async def btDeviceConnected(self,address):
         self.trace(0,"device connected "+address)
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
@@ -167,9 +167,9 @@ class BluetoothAudioBridge:
               command=deviceConfig["onConnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, preexec_fn=os.setsid)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True)
 
-    def btDeviceDisconnected(self,address):
+    async def btDeviceDisconnected(self,address):
         self.trace(0,"device disconnected "+address)
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
@@ -181,7 +181,7 @@ class BluetoothAudioBridge:
               command=deviceConfig["onDisconnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, preexec_fn=os.setsid)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True)
 
     async def lookForDbusChanges(self):
        while self.Continue:
@@ -202,13 +202,13 @@ class BluetoothAudioBridge:
                for oldDevice in self.DbusBluezDiscoveredDevices:
                    if oldDevice not in foundDevices:
                        removeDevices.append(oldDevice)
-                       self.dbusBtDeviceRemoved(oldDevice)
+                       await self.dbusBtDeviceRemoved(oldDevice)
                for removeDevice in removeDevices:
                    self.DbusBluezDiscoveredDevices.pop(removeDevice,None)
                for foundDevice in foundDevices:
                    if foundDevice not in self.DbusBluezDiscoveredDevices:
                        self.DbusBluezDiscoveredDevices[foundDevice]=True
-                       self.dbusBtDeviceDetected(foundDevice)
+                       await self.dbusBtDeviceDetected(foundDevice)
                # now check disconnect <-> connect
                connectedDevices = {}
                for foundDevice in foundDevices:
@@ -221,13 +221,13 @@ class BluetoothAudioBridge:
                for alreadyConnectedDevice in self.DbusBluezConnectedDevices:
                    if alreadyConnectedDevice not in connectedDevices:
                       disconnectedDevices.append(alreadyConnectedDevice)
-                      self.dbusBtDeviceDisconnected(alreadyConnectedDevice)
+                      await self.dbusBtDeviceDisconnected(alreadyConnectedDevice)
                for disconnectedDevice in disconnectedDevices:
                    self.DbusBluezConnectedDevices.pop(disconnectedDevice,None)
                for connectedDevice in connectedDevices:
                    if connectedDevice not in self.DbusBluezConnectedDevices:
                       self.DbusBluezConnectedDevices[connectedDevice]=True
-                      self.dbusBtDeviceConnected(connectedDevice)
+                      await self.dbusBtDeviceConnected(connectedDevice)
            #except KeyError:
            #    print("dbus error")
            except GError as err:

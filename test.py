@@ -190,6 +190,12 @@ class TestFakeMethods():
            self.TestResult=self.TestResult+1
         return methodCall
 
+    def callerWithOneParameterWasCalledAsync(self):
+        async def methodCall(parameter):
+           print("parameter "+parameter)
+           self.TestResult=self.TestResult+1
+        return methodCall
+
     async def sendMqttConnectMessage(self):
         mqttpublish.single("/BluetoothAudioBridge/commands", payload="Connect: ", hostname=mqttServer
 , port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
@@ -268,7 +274,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(30))
 
     def atest_detectMockedBluetoothDevice(self):
-        self.bluetoothAudioBridge.dbusBtDeviceDetected=self.fakes.callerWithOneParameterWasCalled()
+        self.bluetoothAudioBridge.dbusBtDeviceDetected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter()) 
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.loop.run_until_complete(asyncio.sleep(2))
@@ -279,7 +285,7 @@ class TestBridge(unittest.TestCase):
         self.assertEqual(self.fakes.TestResult,1)
 
     def atest_removeMockedBluetoothDevice(self):
-        self.bluetoothAudioBridge.dbusBtDeviceRemoved=self.fakes.callerWithOneParameterWasCalled()
+        self.bluetoothAudioBridge.dbusBtDeviceRemoved=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.loop.run_until_complete(asyncio.sleep(2))
@@ -292,7 +298,7 @@ class TestBridge(unittest.TestCase):
         self.assertEqual(self.fakes.TestResult,1)
 
     def test_detectMockedBluetoothDeviceConnection(self):
-        self.bluetoothAudioBridge.dbusBtDeviceConnected=self.fakes.callerWithOneParameterWasCalled()
+        self.bluetoothAudioBridge.dbusBtDeviceConnected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.fakes.fakeDbusDevice.Connected=True
@@ -302,7 +308,7 @@ class TestBridge(unittest.TestCase):
         self.assertEqual(self.fakes.TestResult,1)
 
     def test_detectMockedBluetoothDeviceDisconnection(self):
-        self.bluetoothAudioBridge.dbusBtDeviceDisconnected=self.fakes.callerWithOneParameterWasCalled()
+        self.bluetoothAudioBridge.dbusBtDeviceDisconnected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.fakes.fakeDbusDevice.Connected=True
