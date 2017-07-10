@@ -55,6 +55,8 @@ if not appConfigFilePath==None:
 else:
   print("Cannot locate path of configuration file. Need $XDG_CONFIG_HOME or custom path to configuration file as --config parameter.  Using default configuration")
 
+if "traceLevel" not in  appConfig:
+  appConfig["traceLevel"]=0
 if "useMqtt" not in  appConfig:
   appConfig["useMqtt"]=False
 if "updateConfig" not in appConfig:
@@ -66,6 +68,7 @@ for device,deviceConfig in appConfig["bluetoothDevices"].items():
     deviceConfig["onConnectCommand"]=None
   if "onDisconnectCommand" not in deviceConfig:
     deviceConfig["onDisconnectCommand"]=None
+print("trace level (higher means more output): "+str(appConfig["traceLevel"]))
 print("use mqtt: "+str(appConfig["useMqtt"]))
 print("update configuration file: "+str(appConfig["updateConfig"]))
 for device,deviceConfig in appConfig["bluetoothDevices"].items():
@@ -86,6 +89,7 @@ loop=asyncio.get_event_loop()
 
 # create instance of bluetooth audio bridge main class
 bluetoothAudioBridge=BluetoothAudioBridge(loop)
+bluetoothAudioBridge.TraceLevel=appConfig["traceLevel"]
 bluetoothAudioBridge.btDeviceConfig = appConfig["bluetoothDevices"]
 
 #register termination handler

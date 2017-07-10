@@ -103,7 +103,7 @@ class BluetoothAudioBridge:
             if message==None:
                 self.trace(0,"stopping message proccessing")
                 return
-            self.trace(0,"MQTT: received message")
+            self.trace(1,"MQTT: received message")
             if message.startswith("Connect"):
                 self.mqttReceivedConnect(message)
             if message.startswith("Pair and trust"):
@@ -118,7 +118,7 @@ class BluetoothAudioBridge:
             # reconnect then subscriptions will be renewed.
             client.subscribe("/BluetoothAudioBridge/commands")
         def on_message(client, userdata, msg):
-            self.trace(0,msg.topic+" "+str(msg.payload))
+            self.trace(1,msg.topic+" "+str(msg.payload))
             msgDecoded=msg.payload.decode("utf-8")
             asyncio.ensure_future(self.MqttMessageQueue.put(msgDecoded))
         async def mqttReceiving():
@@ -160,6 +160,8 @@ class BluetoothAudioBridge:
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
             os.killpg(os.getpgid(processGroupToKill), signal.SIGTERM)
+            await asyncio.sleep(1)
+            os.killpg(os.getpgid(processGroupToKill), signal.SIGKILL)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
@@ -174,6 +176,8 @@ class BluetoothAudioBridge:
         if address in self.btRunningProcesses:
             processGroupToKill=self.btRunningProcesses[address].pid
             os.killpg(os.getpgid(processGroupToKill), signal.SIGTERM)
+            await asyncio.sleep(1)
+            os.killpg(os.getpgid(processGroupToKill), signal.SIGKILL)
             self.btRunningProcesses.pop(address,None)
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
@@ -187,7 +191,7 @@ class BluetoothAudioBridge:
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
            try:
-               self.trace(0,"DBUS: connect to "+self.DbusBluezBusName+ " " +self.DbusBluezObjectPath)
+               self.trace(1,"DBUS: connect to "+self.DbusBluezBusName+ " " +self.DbusBluezObjectPath)
                dbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,self.DbusBluezObjectPath)
                dbusNodeXml = dbusNode.Introspect()
                xmlTree = ElementTree.fromstring(dbusNodeXml)
@@ -228,8 +232,9 @@ class BluetoothAudioBridge:
                    if connectedDevice not in self.DbusBluezConnectedDevices:
                       self.DbusBluezConnectedDevices[connectedDevice]=True
                       await self.dbusBtDeviceConnected(connectedDevice)
-           #except KeyError:
-           #    print("dbus error")
+           except KeyError as err:
+               self.trace("dbus error")
+               self.trace(0,err)
            except GError as err:
                self.trace(0,"dbus error")
                self.trace (0,err)
@@ -242,7 +247,7 @@ class BluetoothAudioBridge:
            self.DbusBluezObject = SystemBus()
         else:
            self.DbusBluezObject = SessionBus()
-        self.trace(0,"listening on DBUS")
+        self.trace(0,"listening on D-BUS")
         self.DbusBluezReceivingFuture=self.loop.create_future()
         asyncio.ensure_future(self.lookForDbusChanges())
         
