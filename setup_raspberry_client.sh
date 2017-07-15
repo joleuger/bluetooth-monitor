@@ -31,6 +31,9 @@ ln -s /usr/lib/systemd/user/pulseaudio.socket /home/audioclient/.config/systemd/
 mkdir -p /home/audioclient/.config/systemd/user/default.target.wants
 ln -s /usr/lib/systemd/user/pulseaudio.service /home/audioclient/.config/systemd/user/default.target.wants/pulseaudio.service
 cp contrib/bluetooth-monitor.service /home/audioclient/.config/systemd/user
+cp contrib/pulseaudio-audioclient.service /home/audioclient/.config/systemd/user
+#ln -s /home/audioclient/.config/systemd/user/pulseaudio-audioclient.service /home/audioclient/.config/systemd/user/default.target.wants/pulseaudio-audioclient.service
+#ln -s /home/audioclient/.config/systemd/user/bluetooth-monitor.service /home/audioclient/.config/systemd/user/default.target.wants/bluetooth-monitor.service
 chown -R audioclient:audioclient /home/audioclient/
 
 # now we can use system
