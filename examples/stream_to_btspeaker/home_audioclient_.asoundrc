@@ -1,0 +1,16 @@
+# See /usr/share/doc/libasound2-plugins/README-pulse
+
+pcm.tobluetooth {
+  type pulse
+  device tobluetooth
+  
+  hint {
+    show on
+    description "tobluetooth Output (PulseAudio)"
+  }
+}
+
+ctl.tobluetooth {
+  type pulse
+  device tobluetooth
+}

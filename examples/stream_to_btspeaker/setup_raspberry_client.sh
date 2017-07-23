@@ -20,8 +20,8 @@ udevadm trigger
 
 #copy script into user directory
 mkdir -p /home/audioclient/bluetooth-monitor
-cp * -Rf /home/audioclient/bluetooth-monitor
-cp /home/audioclient/bluetooth-monitor/example-config.yaml /home/audioclient/bluetooth-monitor/config.yaml
+cp ../../core.py ../../main.py  -f /home/audioclient/bluetooth-monitor
+cp ../../example-config.yaml /home/audioclient/bluetooth-monitor/config.yaml
 chown -R audioclient:audioclient /home/audioclient/
 
 
@@ -36,12 +36,19 @@ ln -s /usr/lib/systemd/user/pulseaudio.socket /home/audioclient/.config/systemd/
 ln -s /usr/lib/systemd/user/pulseaudio.service /home/audioclient/.config/systemd/user/default.target.wants/pulseaudio.service
 # ensure, that pulseaudio always restarts
 mkdir -p /home/audioclient/.config/systemd/user/pulseaudio.service.d
-cp contrib/pulseaudio-restart.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
-# cp contrib/pulseaudio-custom.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
-# you can check the used settings with "systemctl --user show pulseaudio.service"
+cp pulseaudio-restart.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
+# cp pulseaudio-custom.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
+# you can check the used settings with "systemctl --user show pulseaudio.service" when logged in as audioclient
+
+# enable virtual pulse device "tobluetooth". enable bridge from alsa to pulse
+#mkdir -p /home/audioclient/.config/pulse
+#cp /etc/pulse/default.pa /home/audioclient/.config/pulse/default.pa
+#echo load-module module-null-sink rate=44100 channels=2 sink_name=tobluetooth >> /home/audioclient/.config/pulse/default.pa
+#apt-get install -qy libasound2-plugins
+#cp home_audioclient_.asoundrc /home/audioclient/.asoundrc
 
 # enable bluetooth-monitor
-cp contrib/bluetooth-monitor.service /home/audioclient/.config/systemd/user
+cp bluetooth-monitor.service /home/audioclient/.config/systemd/user
 ln -s /home/audioclient/.config/systemd/user/bluetooth-monitor.service /home/audioclient/.config/systemd/user/default.target.wants/bluetooth-monitor.service
 
 # fix file permissions
