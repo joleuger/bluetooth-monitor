@@ -39,9 +39,10 @@ mkdir -p /home/audioclient/.config/systemd/user/pulseaudio.service.d
 cp pulseaudio-restart.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
 # cp pulseaudio-custom.conf /home/audioclient/.config/systemd/user/pulseaudio.service.d
 # you can check the used settings with "systemctl --user show pulseaudio.service" when logged in as audioclient
+mkdir -p /home/audioclient/.config/pulse
+cp /etc/pulse/daemon.conf /home/audioclient/.config/pulse/daemon.conf
 
 # enable virtual pulse device "tobluetooth". enable bridge from alsa to pulse
-#mkdir -p /home/audioclient/.config/pulse
 #cp /etc/pulse/default.pa /home/audioclient/.config/pulse/default.pa
 #echo load-module module-null-sink rate=44100 channels=2 sink_name=tobluetooth >> /home/audioclient/.config/pulse/default.pa
 #apt-get install -qy libasound2-plugins
