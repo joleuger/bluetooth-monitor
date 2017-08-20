@@ -129,6 +129,7 @@ class TestFakeDbusBluezDevice():
   
     @Connected.setter
     def Connected(self, value):
+        print("dummy-connection: "+str(value))
         self._connected = value
         self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Connected": self._connected}, [])
   
@@ -147,7 +148,7 @@ class TestFakeDbusBluezDevice():
         return self._uuids
 
     @UUIDs.setter
-    def Trusted(self, value):
+    def UUIDs(self, value):
         self._uuids = value
         self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"UUIDs": self._uuids}, [])
 
@@ -324,9 +325,9 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
         self.fakes.fakeDbusDevice.Connected=True
-        self.loop.run_until_complete(asyncio.sleep(0.5))
+        self.loop.run_until_complete(asyncio.sleep(2))
         self.fakes.fakeDbusDevice.Connected=False
-        self.loop.run_until_complete(asyncio.sleep(0.5))
+        self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
         self.assertEqual(self.fakes.TestResult,1)
