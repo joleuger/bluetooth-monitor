@@ -178,8 +178,14 @@ class BluetoothAudioBridge:
             await asyncio.sleep(1)
             os.killpg(os.getpgid(processGroupToKill), signal.SIGKILL)
             self.btRunningProcesses.pop(address,None)
+        deviceConfig=None
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
+        else:
+           uuids=self.DbusBluezUUIDsOfDevices[address]
+           if self.btDeviceHasA2DPSink(uuids):
+              deviceConfig=self.btDeviceConfig["other_a2dp_sinks"]
+        if deviceConfig!=None:
            if "onConnectCommand" in deviceConfig:
               command=deviceConfig["onConnectCommand"]
               if command:
@@ -194,8 +200,14 @@ class BluetoothAudioBridge:
             await asyncio.sleep(1)
             os.killpg(os.getpgid(processGroupToKill), signal.SIGKILL)
             self.btRunningProcesses.pop(address,None)
+        deviceConfig=None
         if address in self.btDeviceConfig:
            deviceConfig = self.btDeviceConfig[address]
+        else:
+           uuids=self.DbusBluezUUIDsOfDevices[address]
+           if self.btDeviceHasA2DPSink(uuids):
+              deviceConfig=self.btDeviceConfig["other_a2dp_sinks"]
+        if deviceConfig!=None:
            if "onDisconnectCommand" in deviceConfig:
               command=deviceConfig["onDisconnectCommand"]
               if command:

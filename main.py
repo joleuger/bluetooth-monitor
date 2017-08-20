@@ -63,6 +63,8 @@ if "updateConfig" not in appConfig:
   appConfig["updateConfig"]=False
 if "bluetoothDevices" not in appConfig:
   appConfig["bluetoothDevices"]={}
+if "other_a2dp_sinks" not in appConfig["bluetoothDevices"]:
+  appConfig["bluetoothDevices"]["other_a2dp_sinks"]={}
 for device,deviceConfig in appConfig["bluetoothDevices"].items():
   if "onConnectCommand" not in deviceConfig:
     deviceConfig["onConnectCommand"]=None
