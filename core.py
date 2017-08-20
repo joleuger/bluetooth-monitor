@@ -41,6 +41,7 @@ class BluetoothAudioBridge:
         self.DbusBluezObject=None
         self.DbusBluezReceivingFuture=None
         self.DbusBluezDiscoveredDevices={}
+        self.DbusBluezUUIDsOfDevices={}
         self.DbusBluezConnectedDevices={}
         self.MqttPath="/BluetoothAudioBridge"
         self.MqttServer="localhost"
@@ -155,6 +156,20 @@ class BluetoothAudioBridge:
     async def btDeviceRemoved(self,address):
         self.trace(0,"device removed "+address)
 
+    def btClassIsAudio(self,btClass):
+        # https://www.bluetooth.com/specifications/assigned-numbers/baseband
+        major_service_audio_bit = 1<<21
+        major_device_audio_bit = 1<<10
+        is_audio_service = (major_service_audio_bit & btClass)==major_service_audio_bit
+        is_audio_device = (major_device_audio_bit & btClass)==major_device_audio_bit
+        return is_audio_service and is_audio_device
+
+    def btDeviceHasA2DPSink(self,uuids):
+        # https://github.com/pauloborges/bluez/blob/master/lib/uuid.h
+        if "0000110b-0000-1000-8000-00805f9b34fb" in uuids:
+            return True
+        return False
+
     async def btDeviceConnected(self,address):
         self.trace(0,"device connected "+address)
         if address in self.btRunningProcesses:
@@ -218,6 +233,8 @@ class BluetoothAudioBridge:
                for foundDevice in foundDevices:
                    devicePath = self.DbusBluezObjectPath+ "/dev_"+foundDevice
                    deviceDbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,devicePath)
+                   if foundDevice not in self.DbusBluezUUIDsOfDevices:
+                       self.DbusBluezUUIDsOfDevices[foundDevice] = await self.loop.run_in_executor(None, lambda: deviceDbusNode.UUIDs)
                    isConnected = await self.loop.run_in_executor(None, lambda: deviceDbusNode.Connected)
                    if isConnected :
                       connectedDevices[foundDevice]=True

@@ -87,6 +87,8 @@ class TestFakeDbusBluezDevice():
            </property>
            <property name="Trusted" type="b" access="readwrite">
            </property>
+           <property name="UUIDs" type="as" access="read">
+           </property>
          </interface>
        </node>"""
 
@@ -109,6 +111,7 @@ class TestFakeDbusBluezDevice():
         self._address = "initial value"
         self._connected = False
         self._trusted = False
+        self._uuids = ['0000110b-0000-1000-8000-00805f9b34fb']
         self.fakes=fakes
   
     @property
@@ -138,6 +141,15 @@ class TestFakeDbusBluezDevice():
     def Trusted(self, value):
         self._trusted = value
         self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Trusted": self._trusted}, [])
+ 
+    @property
+    def UUIDs(self):
+        return self._uuids
+
+    @UUIDs.setter
+    def Trusted(self, value):
+        self._uuids = value
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"UUIDs": self._uuids}, [])
 
     PropertiesChanged = signal()
 
