@@ -262,7 +262,7 @@ class BluetoothAudioBridge:
                       self.DbusBluezConnectedDevices[connectedDevice]=True
                       await self.dbusBtDeviceConnected(connectedDevice)
            except KeyError as err:
-               self.trace("dbus error")
+               self.trace(0,"dbus error")
                self.trace(0,err)
            except GError as err:
                self.trace(0,"dbus error")
