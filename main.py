@@ -26,6 +26,7 @@ import os
 import yaml
 import argparse
 from core import BluetoothAudioBridge
+from loadconfig import BluetoothMonitorConfig
 import signal
 
 parser = argparse.ArgumentParser()

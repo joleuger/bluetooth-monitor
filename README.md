@@ -15,6 +15,8 @@ Run mosquitto in background when testing mqtt functionality
 
 # Roadmap
 - [X] Connecting to a MQTT-Server
+- [ ] Example configuration for snapcast
+- [ ] Auto-reload configurtion
 - [ ] Remote control via MQTT
 - [ ] Status reports via MQTT
 

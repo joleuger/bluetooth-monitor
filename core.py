@@ -64,6 +64,9 @@ class BluetoothAudioBridge:
         self.btDeviceConfig = {}
         self.btRunningProcesses = {}
 
+    def loadConfig(self,appConfig):
+        self.TraceLevel=appConfig["traceLevel"]
+        self.btDeviceConfig = appConfig["bluetoothDevices"]
 
     def trace(self,level,msg):
         if self.TraceLevel >= level:

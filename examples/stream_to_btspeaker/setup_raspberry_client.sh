@@ -20,7 +20,7 @@ udevadm trigger
 
 #copy script into user directory
 mkdir -p /home/audioclient/bluetooth-monitor
-cp ../../core.py ../../main.py  -f /home/audioclient/bluetooth-monitor
+cp ../../core.py ../../main.py ../../configManager.py -f /home/audioclient/bluetooth-monitor
 cp ../../example-config.yaml /home/audioclient/bluetooth-monitor/config.yaml
 chown -R audioclient:audioclient /home/audioclient/
 
@@ -41,6 +41,9 @@ cp pulseaudio-restart.conf /home/audioclient/.config/systemd/user/pulseaudio.ser
 # you can check the used settings with "systemctl --user show pulseaudio.service" when logged in as audioclient
 mkdir -p /home/audioclient/.config/pulse
 cp /etc/pulse/daemon.conf /home/audioclient/.config/pulse/daemon.conf
+echo "allow-exit = no" >> /home/audioclient/.config/pulse/daemon.conf
+echo "exit-idle-time = -1" >> /home/audioclient/.config/pulse/daemon.conf
+
 
 # enable virtual pulse device "tobluetooth". enable bridge from alsa to pulse
 #cp /etc/pulse/default.pa /home/audioclient/.config/pulse/default.pa
