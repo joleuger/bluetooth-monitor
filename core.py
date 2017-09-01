@@ -174,7 +174,7 @@ class BluetoothAudioBridge:
         return False
 
     def stdoutOfPopen(self):
-        if self.TraceLevel > 1:
+        if self.TraceLevel < 3:
            return subprocess.DEVNULL
         return None
 
