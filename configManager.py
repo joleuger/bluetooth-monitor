@@ -54,6 +54,8 @@ class BluetoothMonitorConfigManager:
         self.appConfig["useMqtt"]=False
       if "updateConfig" not in self.appConfig:
         self.appConfig["updateConfig"]=False
+      if "saveConfigOnExit" not in self.appConfig:
+        self.appConfig["saveConfigOnExit"]=False
       if "bluetoothDevices" not in self.appConfig:
         self.appConfig["bluetoothDevices"]={}
       if "other_a2dp_sinks" not in self.appConfig["bluetoothDevices"]:
@@ -66,6 +68,7 @@ class BluetoothMonitorConfigManager:
       print("trace level (higher means more output): "+str(self.appConfig["traceLevel"]))
       print("use mqtt: "+str(self.appConfig["useMqtt"]))
       print("update configuration file: "+str(self.appConfig["updateConfig"]))
+      print("save configuration file on exit: "+str(self.appConfig["saveConfigOnExit"]))
       for device,deviceConfig in self.appConfig["bluetoothDevices"].items():
         print("bluetooth device (must be in upper case form, e.g. A0_14_...): "+str(device))
         print("onConnectCommand: "+str(deviceConfig["onConnectCommand"]))
@@ -87,12 +90,14 @@ class BluetoothMonitorConfigManager:
       return False
     
     def saveConfig(self):
-      if (not self.appConfigFilePath==None) and self.appConfig["updateConfig"]:
+      if (not self.appConfigFilePath==None):
         print("update settings file")
         configFile=open(appConfigFilePath,"w")
         yaml.dump(self.appConfig,configFile)
 
     async def watchConfig(self):
+      if self.WatchingFuture != None:
+         return
       self.WatchingFuture=self.loop.create_future()
       while self.Continue:
           self.trace(3,"checking for updated configuraton")

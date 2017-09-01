@@ -57,22 +57,38 @@ bluetoothAudioBridge=BluetoothAudioBridge(loop)
 # load configuration
 configManager.onLoadConfigHandler=bluetoothAudioBridge.loadConfig
 configManager.loadConfig()
+if configManager.appConfig["updateConfig"]:
+    loop.run_until_complete(configManager.startWatchConfig())
+
 
 #register termination handler
-def ask_exit(signame):
+exited=False
+def askExit(signame):
+    #beware of typos here. might segfault
     print("got signal %s: exit" % signame)
-    #loop.run_until_complete(bluetoothAudioBridge.unregister())
-    configManager.saveConfig()
+    global exited
+    exited=True
+    print("stopping loop")
     loop.stop()
-    # everything after this point will not be reached
-for signame in ('SIGINT', 'SIGTERM'):
-    loop.add_signal_handler(getattr(signal, signame), lambda : ask_exit(signame))
+    bluetoothAudioBridge.Continue=False
+# Override default signal handler (no KeyboardInterrupt by GLib or Python anymore)
+# (https://github.com/GNOME/pygobject/blob/master/gi/overrides/GLib.py)
+
+signal.signal(signal.SIGINT,  lambda sig,frame: askExit('SIGINT'))
+signal.signal(signal.SIGTERM, lambda sig,frame: askExit('SIGTERM'))
 
 #register dbus
+print("registering on dbus")
 loop.run_until_complete(bluetoothAudioBridge.registerDbus())
-loop.run_forever()
 
+if not exited:
+  print("running main loop")
+  loop.run_forever()
+  print("main loop quit, cleaning up")
+  loop.run_until_complete(bluetoothAudioBridge.unregister())
+  loop.run_until_complete(configManager.stopWatchConfig())
+  if configManager.appConfig["saveConfigOnExit"]:
+     configManager.saveConfig()
 
-# this point will never be reached
 loop.close()
 print("Finished") 

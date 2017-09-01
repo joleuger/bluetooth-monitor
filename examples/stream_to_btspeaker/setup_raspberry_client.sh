@@ -1,7 +1,7 @@
 #!/bin/sh
 apt-get update
 
-apt-get -qy install pulseaudio gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-tools gstreamer1.0-pulseaudio gstreamer1.0-plugins-ugly
+apt-get -qy install pulseaudio gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-tools gstreamer1.0-pulseaudio gstreamer1.0-plugins-ugly gstreamer1.0-libav
 apt-get -qy install bluetooth bluez bluez-tools bluez-firmware pulseaudio-module-bluetooth
 apt-get -qy install dbus-user-session
 apt-get -qy install systemd-container
