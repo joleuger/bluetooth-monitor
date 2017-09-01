@@ -92,7 +92,7 @@ class BluetoothMonitorConfigManager:
     def saveConfig(self):
       if (not self.appConfigFilePath==None):
         print("update settings file")
-        configFile=open(appConfigFilePath,"w")
+        configFile=open(self.appConfigFilePath,"w")
         yaml.dump(self.appConfig,configFile)
 
     async def watchConfig(self):
@@ -102,11 +102,17 @@ class BluetoothMonitorConfigManager:
       while self.Continue:
           self.trace(3,"checking for updated configuraton")
           if self.checkIfConfigOnDriveWasUpdated():
-             self.loadConfig()
+             self.trace(0,"reloading configuration")
+             try:
+               self.loadConfig()
+             except FileNotFoundError:
+               pass
+             self.trace(0,"reloading configuration finished")
           await asyncio.sleep(1)
       self.WatchingFuture.set_result(True)
     
     async def startWatchConfig(self):
+      self.trace(1,"watching changes on local configuration file")
       asyncio.ensure_future(self.watchConfig())
       
     async def stopWatchConfig(self):

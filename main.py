@@ -56,6 +56,7 @@ bluetoothAudioBridge=BluetoothAudioBridge(loop)
 
 # load configuration
 configManager.onLoadConfigHandler=bluetoothAudioBridge.loadConfig
+configManager.trace=bluetoothAudioBridge.trace
 configManager.loadConfig()
 if configManager.appConfig["updateConfig"]:
     loop.run_until_complete(configManager.startWatchConfig())

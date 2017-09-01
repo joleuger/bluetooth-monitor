@@ -173,6 +173,11 @@ class BluetoothAudioBridge:
             return True
         return False
 
+    def stdoutOfPopen(self):
+        if self.TraceLevel > 1:
+           return subprocess.DEVNULL
+        return None
+
     async def btDeviceConnected(self,address):
         self.trace(0,"device connected "+address)
         if address in self.btRunningProcesses:
@@ -193,7 +198,7 @@ class BluetoothAudioBridge:
               command=deviceConfig["onConnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True,stdout=self.stdoutOfPopen())
 
     async def btDeviceDisconnected(self,address):
         self.trace(0,"device disconnected "+address)
@@ -215,7 +220,7 @@ class BluetoothAudioBridge:
               command=deviceConfig["onDisconnectCommand"]
               if command:
                 commandToExecute=command.replace("$DEVICE",address)
-                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True)
+                self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True,stdout=self.stdoutOfPopen())
 
     async def lookForDbusChanges(self):
        while self.Continue:
