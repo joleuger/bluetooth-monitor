@@ -18,7 +18,7 @@ btmac=sys.argv[1]
 
 print("bluetooth address to create loopback for: "+btmac)
 
-createLoopbackProcess = subprocess.Popen(["/usr/bin/pactl", "load-module","module-loopback",'source="tobluetooth.monitor"','sink=bluez_sink.'+btmac+'.a2dp_sink'],stdout=subprocess.PIPE)
+createLoopbackProcess = subprocess.Popen(["/usr/bin/pactl", "load-module","module-loopback",'source="snapclient.monitor"','sink=bluez_sink.'+btmac+'.a2dp_sink'],stdout=subprocess.PIPE)
 if createLoopbackProcess.returncode == 0:
   loopbackDevice=createLoopbackProcess.stdout.strip()
 

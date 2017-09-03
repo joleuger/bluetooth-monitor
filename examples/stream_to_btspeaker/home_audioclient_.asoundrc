@@ -1,16 +1,16 @@
 # See /usr/share/doc/libasound2-plugins/README-pulse
 
-pcm.tobluetooth {
+pcm.snapcast {
   type pulse
-  device tobluetooth
+  device snapcast
   
   hint {
     show on
-    description "tobluetooth Output (PulseAudio)"
+    description "snapcast device (PulseAudio)"
   }
 }
 
-ctl.tobluetooth {
+ctl.snapcast {
   type pulse
-  device tobluetooth
+  device snapcast
 }

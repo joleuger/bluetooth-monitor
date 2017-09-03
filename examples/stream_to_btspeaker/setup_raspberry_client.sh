@@ -5,7 +5,7 @@ apt-get -qy install pulseaudio gstreamer1.0-plugins-base gstreamer1.0-plugins-go
 apt-get -qy install bluetooth bluez bluez-tools bluez-firmware pulseaudio-module-bluetooth
 apt-get -qy install dbus-user-session
 apt-get -qy install systemd-container
-apt-get -qy install python3-pip python3-yaml
+apt-get -qy install wget
 
 pip3 install pydbus
 pip3 install gbulb
@@ -45,11 +45,39 @@ echo "allow-exit = no" >> /home/audioclient/.config/pulse/daemon.conf
 echo "exit-idle-time = -1" >> /home/audioclient/.config/pulse/daemon.conf
 
 
-# enable virtual pulse device "tobluetooth". enable bridge from alsa to pulse
+# enable virtual pulse device "snapcast". enable bridge from alsa to pulse. install snapcast
 #cp /etc/pulse/default.pa /home/audioclient/.config/pulse/default.pa
-#echo load-module module-null-sink rate=44100 channels=2 sink_name=tobluetooth >> /home/audioclient/.config/pulse/default.pa
+#echo load-module module-null-sink rate=44100 channels=2 sink_name=snapcast >> /home/audioclient/.config/pulse/default.pa
 #apt-get install -qy libasound2-plugins
 #cp home_audioclient_.asoundrc /home/audioclient/.asoundrc
+
+#build snapclient
+#apt-get install -qy libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+#mkdir -p /build
+#cd /build
+#git clone https://github.com/badaix/snapcast.git
+#cd snapcast
+#git checkout tags/v0.11.1
+#cd externals
+#git submodule update --init --recursive
+#cd ../client
+#make
+#cp snapclient /usr/local/bin
+
+#alternative: download precompiled snapclient
+#mkdir -p /tmp/snapclient
+#cd /tmp/snapclient
+#wget https://github.com/badaix/snapcast/releases/download/v0.11.1/snapclient_0.11.1_armhf.deb
+#dpkg -x snapclient_0.11.1_armhf.deb .
+#cp ./usr/bin/snapclient /usr/local/bin/snapclient
+#cd /
+#rm -rf /tmp/snapclient
+
+#enable snapclient user systemd service
+#cp snapclient.service /home/audioclient/.config/systemd/user
+#ln -s /home/audioclient/.config/systemd/user/snapclient.service /home/audioclient/.config/systemd/user/default.target.wants/snapclient.service
+
+
 
 # enable bluetooth-monitor
 cp bluetooth-monitor.service /home/audioclient/.config/systemd/user

@@ -1,0 +1,12 @@
+[Unit]
+Description=Snapcast to pulse audio device
+
+[Service]
+Type=simple
+StandardOutput=null
+WorkingDirectory=/home/audioclient/bluetooth-monitor
+
+ExecStart=/usr/local/bin/snapclient -s snapcast
+
+[Install]
+WantedBy=default.target
