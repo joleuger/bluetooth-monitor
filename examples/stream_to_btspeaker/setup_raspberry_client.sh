@@ -20,7 +20,7 @@ udevadm trigger
 
 #copy script into user directory
 mkdir -p /home/audioclient/bluetooth-monitor
-cp ../../core.py ../../main.py ../../configManager.py -f /home/audioclient/bluetooth-monitor
+cp ../../core.py ../../main.py ../../configManager.py ../../pulseaudio-create-loopback.py -f /home/audioclient/bluetooth-monitor
 cp ../../example-config.yaml /home/audioclient/bluetooth-monitor/config.yaml
 chown -R audioclient:audioclient /home/audioclient/
 
