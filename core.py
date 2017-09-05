@@ -191,7 +191,7 @@ class BluetoothAudioBridge:
            deviceConfig = self.btDeviceConfig[address]
         else:
            uuids=self.DbusBluezUUIDsOfDevices[address]
-           if self.btDeviceHasA2DPSink(uuids):
+           if self.btDeviceHasA2DPSink(uuids) and "other_a2dp_sinks" in self.btDeviceConfig:
               deviceConfig=self.btDeviceConfig["other_a2dp_sinks"]
         if deviceConfig!=None:
            if "onConnectCommand" in deviceConfig:
@@ -213,7 +213,7 @@ class BluetoothAudioBridge:
            deviceConfig = self.btDeviceConfig[address]
         else:
            uuids=self.DbusBluezUUIDsOfDevices[address]
-           if self.btDeviceHasA2DPSink(uuids):
+           if self.btDeviceHasA2DPSink(uuids) and "other_a2dp_sinks" in self.btDeviceConfig:
               deviceConfig=self.btDeviceConfig["other_a2dp_sinks"]
         if deviceConfig!=None:
            if "onDisconnectCommand" in deviceConfig:
@@ -270,10 +270,10 @@ class BluetoothAudioBridge:
                       self.DbusBluezConnectedDevices[connectedDevice]=True
                       await self.dbusBtDeviceConnected(connectedDevice)
            except KeyError as err:
-               self.trace(0,"dbus error")
+               self.trace(0,"dbus error (KeyError)")
                self.trace(0,err)
            except GError as err:
-               self.trace(0,"dbus error")
+               self.trace(0,"dbus error (GError)")
                self.trace (0,err)
            await asyncio.sleep(1)
        print("finished looking for dbus changes")
