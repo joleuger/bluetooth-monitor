@@ -24,16 +24,82 @@ import asyncio, gbulb
 from pydbus import SessionBus
 from pydbus import SystemBus
 import unittest
-from hbmqtt.broker import Broker
 from pydbus.generic import signal
-import paho.mqtt.publish as mqttpublish
+from gi.repository import GLib, Gio
+
 
 from core import BluetoothAudioBridge
 
-startTheFakeBroker=False
-mqttServer="127.0.0.1"
-mqttUsername="username"
-mqttPassword="pw"
+class TestFakeObjectManager():
+    # org.freedesktop.DBus.ObjectManager.GetManagedObjects (out DICT<OBJPATH,DICT<STRING,DICT<STRING,VARIANT>>> objpath_interfaces_and_properties);
+    # org.freedesktop.DBus.ObjectManager.InterfacesAdded (OBJPATH object_path, DICT<STRING,DICT<STRING,VARIANT>> interfaces_and_properties);
+    # org.freedesktop.DBus.ObjectManager.InterfacesRemoved (OBJPATH object_path, ARRAY<STRING> interfaces);
+    dbus="""
+       <node>
+         <interface name='org.freedesktop.DBus.ObjectManager'>
+           <method name='GetManagedObjects'>
+             <arg type='a{oa{sa{sv}}}' name='objpath_interfaces_and_properties' direction='out'/>
+           </method>
+           <signal name="InterfacesAdded">
+             <arg direction="out" type="o" name="object_path"/>
+             <arg direction="out" type="a{sa{sv}}" name="interfaces_and_properties"/>
+           </signal>
+           <signal name="InterfacesRemoved">
+             <arg direction="out" type="o" name="object_path"/>
+             <arg direction="out" type="as" name="interfaces"/>
+           </signal>
+         </interface>
+       </node>"""
+
+    def ToVariant(self,pvalue):
+        pvalueVariant = None
+        if type(pvalue)==str:
+           pvalueVariant=GLib.Variant('s',pvalue)
+        if type(pvalue)==bytes:
+           pvalueVariant=GLib.Variant('s',str(pvalue))
+        if type(pvalue)==int:
+           pvalueVariant=GLib.Variant('i',pvalue)
+        if type(pvalue)==float:
+           pvalueVariant=GLib.Variant('d',pvalue)
+        if type(pvalue)==bool:
+           pvalueVariant=GLib.Variant('b',pvalue)
+
+    def GetManagedObjects(self):
+        """get managed objects"""
+        print("get managed objects")
+        result = {}
+        for path,obj in self.objects.items():
+          resObj = {}
+          node_info = type(obj).dbus
+          node_info = Gio.DBusNodeInfo.new_for_xml(node_info)
+          interfaces = node_info.interfaces
+          for interface in interfaces:
+             resInterface={}
+             for p in interface.properties:
+               pvalue = getattr(obj,p.name)
+               pvalueVariant=GLib.Variant(p.signature,pvalue)
+               if pvalueVariant==None:
+                  print("could not convert value "+str(pvalue)+" of "+p.name+"("+ str(type(pvalue)) +")to a variant")
+               else:
+                  resInterface[p.name]=pvalueVariant
+             resObj[interface.name]=resInterface
+          result[path]=resObj
+        return result
+
+    def __init__(self,bus):
+        self.bus=bus
+        self.objects = {}
+        self.registrations = {}
+
+    def export(self,path,obj): 
+        newRegistration=self.bus.register_object(path,obj,None)
+        self.objects[path]=obj
+        self.registrations[path]=newRegistration
+  
+    PropertiesChanged = signal()
+    InterfacesAdded = signal()
+    InterfacesRemoved = signal()
+
 
 class TestFakeDbusBluezAdapter():
     dbus="""
@@ -159,43 +225,13 @@ class TestFakeDbusBluezDevice():
 class TestFakeMethods():
     def __init__(self,bluetoothAudioBridge):
         self.TestResult = 0
-        self.broker = None
         self.bluetoothAudioBridge=bluetoothAudioBridge
         self.bluetoothAudioBridge.DbusBluezBusName = "BluetoothAudioBridge.FakeDbusObject"
         self.bluetoothAudioBridge.DbusBluezObjectPath = "/BluetoothAudioBridge/FakeDbusObject/hci0"
-        self.bluetoothAudioBridge.MqttServer = mqttServer
-        self.bluetoothAudioBridge.MqttUsername = mqttUsername
-        self.bluetoothAudioBridge.MqttPassword = mqttPassword
         self.fakeDbusObject = None
         self.fakeDbusDevice = None
         self.bus = None
         self.bluetoothAudioBridge.DbusBluezOnSystemBus=False
-
-    @asyncio.coroutine
-    def startFakeBroker(self):
-        if startTheFakeBroker:
-           print("Start fake broker")
-           defaultMqtt = {}
-           defaultMqtt["listeners"]={}
-           defaultMqtt["listeners"]["default"]={"max-connections":5,"type":"tcp" }
-           defaultMqtt["listeners"]["my-tcp-1"]={"bind":mqttServer}
-           defaultMqtt["timeout-disconnect-delay"]=2
-           defaultMqtt["auth"]={}
-           defaultMqtt["auth"]["plugins"]=["auth.anonymous"]
-           defaultMqtt["auth"]["allow-anonymous"]=True
-           defaultMqtt["auth"]["password-file"]=None
-           self.broker = Broker(defaultMqtt)
-           try:
-               yield from self.broker.start()
-           except Exception:
-               #workaround
-               pass
-
-    @asyncio.coroutine
-    def stopFakeBroker(self):
-        if startTheFakeBroker:
-           print("shutdown fake broker")
-           yield from self.broker.shutdown()
 
     def callerWithOneParameterWasCalled(self):
         def methodCall(parameter):
@@ -209,29 +245,45 @@ class TestFakeMethods():
            self.TestResult=self.TestResult+1
         return methodCall
 
-    async def sendMqttConnectMessage(self):
-        mqttpublish.single("/BluetoothAudioBridge/commands", payload="Connect: ", hostname=mqttServer
-, port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
-        print("connect message sent")
-
-    async def sendMqttPairAndTrustMessage(self):
-        mqttpublish.single("/BluetoothAudioBridge/commands", payload="Pair and trust: ", hostname=mqttServer
-, port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
-        print("pair and trust message sent")
-
-    async def sendMqttScanMessage(self):
-        mqttpublish.single("/BluetoothAudioBridge/commands", payload="Scan:", hostname=mqttServer
-, port=1883, auth = {'username':mqttUsername, 'password':mqttPassword})
-        print("scan message sent")
-
     async def startTestFakeDbusBluezAdapter(self):
         if not self.bus:
             self.bus = SessionBus()
-        self.fakeDbusDevice = None
         if (self.fakeDbusObject):
             self.fakeDbusObject.unpublish()
             await asyncio.sleep(0.5)
         self.fakeDbusObject =  self.bus.publish(self.bluetoothAudioBridge.DbusBluezBusName,("hci0", TestFakeDbusBluezAdapter(self)))
+
+
+    async def startTestFakeDbusBluezAdapterWithObjectManager(self):
+        if not self.bus:
+            self.bus = SessionBus()
+        if (self.fakeDbusObject):
+            self.fakeDbusObject.unpublish()
+            await asyncio.sleep(0.5)
+        #help(dbusName)
+        #help(dbusObjectManager)
+        #print(dbusObjectManager.get_property("connection"))
+        #print(dbusObjectManager.get_property("object_path"))
+        fakeObjectManager = TestFakeObjectManager(self.bus)
+        fakeDbusAdapter = TestFakeDbusBluezAdapter(self)
+        self.fakeDbusDevice = TestFakeDbusBluezDevice(self)
+        fakeDbusDevice2 = TestFakeDbusBluezDevice(self)
+        prefix = "/"+ self.bluetoothAudioBridge.DbusBluezBusName.replace(".","/")
+        print(prefix)
+        a=self.bus.register_object("/",fakeObjectManager,None)
+        fakeObjectManager.export(prefix+"/hci0",fakeDbusAdapter)
+        fakeObjectManager.export(prefix+"/hci0/dev_aa_12_00_41_aa_00",self.fakeDbusDevice)
+        fakeObjectManager.export(prefix+"/hci0/dev_aa_12_00_41_aa_01",fakeDbusDevice2)
+        dbusName=self.bus.request_name(self.bluetoothAudioBridge.DbusBluezBusName)
+        #dbusObjectManager=Gio.DBusObjectManagerServer.new("/hci0")
+        #dbusObjectManager.set_connection(self.bus.con)
+        #a.unregister()
+        #self.fakeDbusObject =  self.bus.publish(self.bluetoothAudioBridge.DbusBluezBusName,("hci0", TestFakeDbusBluezAdapter(self)))
+        #self.fakeDbusObject =  dbusObjectManager.export("hci0", TestFakeDbusBluezAdapter(self))
+        #help(self.fakeDbusDevice)
+        #dbusObjectManager.export(self.fakeDbusDevice)
+        #dbusName.unown()
+
 
     async def startTestFakeDbusBluezDevice(self):
         if not self.bus:
@@ -271,16 +323,9 @@ class TestBridge(unittest.TestCase):
         self.bluetoothAudioBridge=BluetoothAudioBridge(self.loop)
         self.fakes=TestFakeMethods(self.bluetoothAudioBridge)
 
-    def atest_scanMessageSendToTestBrokerIsReceived(self):
-        self.bluetoothAudioBridge.mqttReceivedScan=self.fakes.callerWithOneParameterWasCalled()
-        self.loop.run_until_complete(self.fakes.startFakeBroker())
-        self.loop.run_until_complete(self.bluetoothAudioBridge.registerMqtt())
-        self.loop.run_until_complete(asyncio.sleep(1)) #must wait for a succesful connection
-        self.loop.run_until_complete(self.fakes.sendMqttScanMessage())
-        self.loop.run_until_complete(asyncio.sleep(2))
-        self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
-        self.loop.run_until_complete(self.fakes.stopFakeBroker())
-        self.assertEqual(self.fakes.TestResult,1)
+    def test_startFakeObjectManager(self):
+        self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapterWithObjectManager())
+        self.loop.run_until_complete(asyncio.sleep(30))
 
     def atest_openFakeDbusAdapterFor30Seconds(self):
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezAdapter()) 
@@ -310,7 +355,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
         self.assertEqual(self.fakes.TestResult,1)
 
-    def test_detectMockedBluetoothDeviceConnection(self):
+    def atest_detectMockedBluetoothDeviceConnection(self):
         self.bluetoothAudioBridge.dbusBtDeviceConnected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
@@ -320,7 +365,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
         self.assertEqual(self.fakes.TestResult,1)
 
-    def test_detectMockedBluetoothDeviceDisconnection(self):
+    def atest_detectMockedBluetoothDeviceDisconnection(self):
         self.bluetoothAudioBridge.dbusBtDeviceDisconnected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluezDevice())
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())

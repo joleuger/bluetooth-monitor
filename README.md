@@ -19,4 +19,4 @@ Run mosquitto in background when testing mqtt functionality
 - [ ] Auto-reload configurtion
 - [ ] Remote control via MQTT
 - [ ] Status reports via MQTT
-
+- [ ] Switch to objectmanager for discovery of new devices (https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager)

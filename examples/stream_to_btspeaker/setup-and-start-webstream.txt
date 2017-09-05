@@ -1,6 +1,7 @@
 
 
 login as audioclient using e.g. "machinectl shell --uid audioclient"
+(note: you can use TAB for auto completion of MACs
 
 > bluetoothctl
 
@@ -8,6 +9,7 @@ login as audioclient using e.g. "machinectl shell --uid audioclient"
 >> pairable on
 >> pair A0:E9:DB:10:3F:B9
 >> trust A0:E9:DB:10:3F:B9
+>> connect A0:E9:DB:10:3F:B9
 >> exit
 
 now you can run a web stream with gst-launch
