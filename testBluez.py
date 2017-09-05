@@ -243,9 +243,9 @@ class TestFakeMethods():
         return methodCall
 
     async def unexportAllDevices(self):
-        if not self.fakeDbusObjectManager:
+        if self.fakeDbusObjectManager:
           for name,obj in self.fakeDbusDevices:
-            self.fakeDbusObjectManager.pop(name)
+            self.fakeDbusObjectManager.unexport(name)
           self.fakeDbusDevices=[]
         #if self.fakeDbusDevice:
         #    self.fakeDbusDevice.unregister()
@@ -285,17 +285,20 @@ class TestFakeMethods():
         return result
 
     async def stopTestFakeDbusBluez(self):
+        await self.unexportAllDevices()
         if (self.fakeDbusObjectManagerRegistration):
             self.fakeDbusObjectManagerRegistration.unregister()
-            self.fakeDbusAdapterRegistration=None
         if (self.fakeDbusAdapterRegistration):
             self.fakeDbusAdapterRegistration.unregister()
-            self.fakeDbusObjectManagerRegistration=None
         if self.busName:
             self.busName.unown()
         self.busName = None
-        self.fakeDbusDevice = None
+        self.fakeDbusDevices = []
         self.fakeDbusObject = None
+        self.fakeDbusObjectManager = None
+        self.fakeDbusObjectManagerRegistration=None
+        self.fakeDbusAdapter = None
+        self.fakeDbusAdapterRegistration=None
         await asyncio.sleep(0.5)
 
     async def cancelIn2Seconds(self):
@@ -360,7 +363,7 @@ class TestBridge(unittest.TestCase):
         self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluez())
         self.assertEqual(self.fakes.TestResult,1)
 
-    def atest_detectMockedBluetoothDeviceDisconnection(self):
+    def test_detectMockedBluetoothDeviceDisconnection(self):
         self.bluetoothAudioBridge.dbusBtDeviceDisconnected=self.fakes.callerWithOneParameterWasCalledAsync()
         self.loop.run_until_complete(self.fakes.startTestFakeDbusBluez()) 
         self.loop.run_until_complete(self.bluetoothAudioBridge.registerDbus())
@@ -372,7 +375,7 @@ class TestBridge(unittest.TestCase):
         deviceobj.Connected=False
         self.loop.run_until_complete(asyncio.sleep(2))
         self.loop.run_until_complete(self.bluetoothAudioBridge.unregister())
-        self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluezAdapterAndDevice())
+        self.loop.run_until_complete(self.fakes.stopTestFakeDbusBluez())
         self.assertEqual(self.fakes.TestResult,1)
 
     def atest_listMockedDbusEntriesOnScanMessage(self):
