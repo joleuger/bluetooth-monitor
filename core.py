@@ -227,14 +227,14 @@ class BluetoothAudioBridge:
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
            try:
-               self.trace(1,"DBUS: connect to "+self.DbusBluezBusName+ " " +self.DbusBluezObjectPath)
+               self.trace(1,"DBUS: GetManagedObjects()")
                managedObjects = await self.loop.run_in_executor(None, lambda: self.DbusBluezRootNode.GetManagedObjects())
                foundDevices={}
                for objPath,obj in managedObjects.items():
                   match = deviceFilter.match(objPath)
                   if match:
                      btmac=match.group("btmac")
-                     dev=obj["BluetoothAudioBridge.FakeDbusBluezObject.Device1"]
+                     dev=obj[self.DbusBluezBusName+".Device1"]
                      foundDevices[btmac]=dev
                self.trace(3,"Found "+str(len(foundDevices))+" devices")
 
@@ -288,7 +288,7 @@ class BluetoothAudioBridge:
            self.DbusBluezRootNode = self.DbusBluezObject.get(self.DbusBluezBusName,"/")
            self.trace(0,"connected to org.bluez")
         except GError as err:
-           self.trace(0,"dbus error (GError)")
+           self.trace(0,"dbus error (register)")
            self.trace (0,err)
            self.DbusBluezRootNode=None
         if self.DbusBluezRootNode:
