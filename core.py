@@ -26,10 +26,10 @@ import asyncio, gbulb
 from gi.repository.GLib import GError
 #from hbmqtt.client import MQTTClient, ClientException
 import paho.mqtt.client as mqtt
-from xml.etree import ElementTree
 import subprocess
 import os
 import signal
+import re
 
 class BluetoothAudioBridge:
     def __init__(self, loop):
@@ -223,20 +223,21 @@ class BluetoothAudioBridge:
                 self.btRunningProcesses[address]=subprocess.Popen(commandToExecute,shell=True, start_new_session=True,stdout=self.stdoutOfPopen(),stderr=self.stdoutOfPopen())
 
     async def lookForDbusChanges(self):
+       deviceFilter = re.compile("^[/]\w+[/]\w+[/]\w+[/]dev_(?P<btmac>\w+)$")
        while self.Continue:
            self.trace(3,"DBUS: wait for device")
            try:
                self.trace(1,"DBUS: connect to "+self.DbusBluezBusName+ " " +self.DbusBluezObjectPath)
-               dbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,self.DbusBluezObjectPath)
-               dbusNodeXml = dbusNode.Introspect()
-               xmlTree = ElementTree.fromstring(dbusNodeXml)
-               # first check found <-> not found
-               foundDevices = {}
-               for child in xmlTree:
-                   if child.tag=="node":
-                       deviceNameWithPrefix = child.attrib['name']
-                       deviceName = deviceNameWithPrefix[4:]
-                       foundDevices[deviceName]=True
+               managedObjects = await self.loop.run_in_executor(None, lambda: self.DbusBluezRootNode.GetManagedObjects())
+               foundDevices={}
+               for objPath,obj in managedObjects.items():
+                  match = deviceFilter.match(objPath)
+                  if match:
+                     btmac=match.group("btmac")
+                     dev=obj["BluetoothAudioBridge.FakeDbusBluezObject.Device1"]
+                     foundDevices[btmac]=dev
+               self.trace(3,"Found "+str(len(foundDevices))+" devices")
+
                removeDevices=[]
                for oldDevice in self.DbusBluezDiscoveredDevices:
                    if oldDevice not in foundDevices:
@@ -250,12 +251,10 @@ class BluetoothAudioBridge:
                        await self.dbusBtDeviceDetected(foundDevice)
                # now check disconnect <-> connect
                connectedDevices = {}
-               for foundDevice in foundDevices:
-                   devicePath = self.DbusBluezObjectPath+ "/dev_"+foundDevice
-                   deviceDbusNode = self.DbusBluezObject.get(self.DbusBluezBusName,devicePath)
+               for foundDevice,dev in foundDevices.items():
                    if foundDevice not in self.DbusBluezUUIDsOfDevices:
-                       self.DbusBluezUUIDsOfDevices[foundDevice] = await self.loop.run_in_executor(None, lambda: deviceDbusNode.UUIDs)
-                   isConnected = await self.loop.run_in_executor(None, lambda: deviceDbusNode.Connected)
+                       self.DbusBluezUUIDsOfDevices[foundDevice] = dev["UUIDs"]
+                   isConnected = dev["Connected"] 
                    if isConnected :
                       connectedDevices[foundDevice]=True
                disconnectedDevices=[]
@@ -280,13 +279,21 @@ class BluetoothAudioBridge:
        self.DbusBluezReceivingFuture.set_result(True)
 
     async def registerDbus(self):
-        if self.DbusBluezOnSystemBus:
-           self.DbusBluezObject = SystemBus()
-        else:
-           self.DbusBluezObject = SessionBus()
-        self.trace(0,"listening on D-BUS")
-        self.DbusBluezReceivingFuture=self.loop.create_future()
-        asyncio.ensure_future(self.lookForDbusChanges())
+        try:
+           if self.DbusBluezOnSystemBus:
+              self.DbusBluezObject = SystemBus()
+           else:
+              self.DbusBluezObject = SessionBus()
+           self.trace(0,"listening on D-BUS")
+           self.DbusBluezRootNode = self.DbusBluezObject.get(self.DbusBluezBusName,"/")
+           self.trace(0,"connected to org.bluez")
+        except GError as err:
+           self.trace(0,"dbus error (GError)")
+           self.trace (0,err)
+           self.DbusBluezRootNode=None
+        if self.DbusBluezRootNode:
+           self.DbusBluezReceivingFuture=self.loop.create_future()
+           asyncio.ensure_future(self.lookForDbusChanges())
         
 
     async def register(self):

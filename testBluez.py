@@ -194,7 +194,7 @@ class TestFakeDbusBluezDevice():
   
     @property
     def Trusted(self):
-        self.fakes.TestResult=self.fakes.TestResult+8
+        #self.fakes.TestResult=self.fakes.TestResult+8
         return self._trusted
 
     @Trusted.setter
@@ -233,6 +233,7 @@ class TestFakeMethods():
     def callerWithOneParameterWasCalled(self):
         def methodCall(parameter):
            print("parameter "+parameter)
+           #print(self.TestResult)
            self.TestResult=self.TestResult+1
         return methodCall
 
