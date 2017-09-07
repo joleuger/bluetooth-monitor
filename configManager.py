@@ -50,6 +50,8 @@ class BluetoothMonitorConfigManager:
       
       if "traceLevel" not in self.appConfig:
         self.appConfig["traceLevel"]=0
+      if "pollingCycle" not in self.appConfig:
+        self.appConfig["pollingCycle"]=2
       if "useMqtt" not in self.appConfig:
         self.appConfig["useMqtt"]=False
       if "updateConfig" not in self.appConfig:
@@ -66,6 +68,7 @@ class BluetoothMonitorConfigManager:
         if "onDisconnectCommand" not in deviceConfig:
           deviceConfig["onDisconnectCommand"]=None
       print("trace level (higher means more output): "+str(self.appConfig["traceLevel"]))
+      print("polling cycle: "+str(self.appConfig["pollingCycle"]))
       print("use mqtt: "+str(self.appConfig["useMqtt"]))
       print("update configuration file: "+str(self.appConfig["updateConfig"]))
       print("save configuration file on exit: "+str(self.appConfig["saveConfigOnExit"]))

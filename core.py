@@ -53,6 +53,7 @@ class BluetoothAudioBridge:
         self.Continue=True
         self.CancellationToken=self.loop.create_future()
         self.TraceLevel=0
+        self.PollingCycle=3
         self.mqttReceivedConnect=self.makeConnect
         self.mqttReceivedPairAndTrust=self.makePairAndTrust
         self.mqttReceivedScan=self.makeScan
@@ -66,6 +67,7 @@ class BluetoothAudioBridge:
 
     def loadConfig(self,appConfig):
         self.TraceLevel=appConfig["traceLevel"]
+        self.PollingCycle=appConfig["pollingCycle"]
         self.btDeviceConfig = appConfig["bluetoothDevices"]
 
     def trace(self,level,msg):
@@ -270,11 +272,12 @@ class BluetoothAudioBridge:
                       await self.dbusBtDeviceConnected(connectedDevice)
            except KeyError as err:
                self.trace(0,"dbus error (KeyError)")
+               print(err)
                self.trace(0,err)
            except GError as err:
                self.trace(0,"dbus error (GError)")
                self.trace (0,err)
-           await asyncio.sleep(1)
+           await asyncio.sleep(self.PollingCycle)
        print("finished looking for dbus changes")
        self.DbusBluezReceivingFuture.set_result(True)
 

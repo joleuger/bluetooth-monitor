@@ -93,11 +93,10 @@ class TestFakeObjectManager():
     InterfacesAdded = signal()
     InterfacesRemoved = signal()
 
-
 class TestFakeDbusBluezAdapter():
     dbus="""
        <node>
-         <interface name='BluetoothAudioBridge.FakeDbusBluezObject.Adapter1'>
+         <interface name='BluetoothAudioBridge.FakeDbusObject.Adapter1'>
            <method name='StartDiscovery'>
            </method>
            <method name='StopDiscovery'>
@@ -128,14 +127,14 @@ class TestFakeDbusBluezAdapter():
     @Address.setter
     def Address(self, value):
         self._address = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Adapter1", {"Address": self._address}, [])
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusObject.Adapter1", {"Address": self._address}, [])
   
     PropertiesChanged = signal()
 
 class TestFakeDbusBluezDevice():
     dbus="""
        <node>
-         <interface name='BluetoothAudioBridge.FakeDbusBluezObject.Device1'>
+         <interface name='BluetoothAudioBridge.FakeDbusObject.Device1'>
            <method name='Connect'>
            </method>
            <method name='Disconnect'>
@@ -180,7 +179,7 @@ class TestFakeDbusBluezDevice():
     @Address.setter
     def Address(self, value):
         self._address = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Address": self._address}, [])
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusObject.Device1", {"Address": self._address}, [])
   
     @property
     def Connected(self):
@@ -190,7 +189,7 @@ class TestFakeDbusBluezDevice():
     def Connected(self, value):
         print("dummy-connection: "+str(value))
         self._connected = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Connected": self._connected}, [])
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusObject.Device1", {"Connected": self._connected}, [])
   
     @property
     def Trusted(self):
@@ -200,7 +199,7 @@ class TestFakeDbusBluezDevice():
     @Trusted.setter
     def Trusted(self, value):
         self._trusted = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"Trusted": self._trusted}, [])
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusObject.Device1", {"Trusted": self._trusted}, [])
  
     @property
     def UUIDs(self):
@@ -209,7 +208,7 @@ class TestFakeDbusBluezDevice():
     @UUIDs.setter
     def UUIDs(self, value):
         self._uuids = value
-        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusBluezObject.Device1", {"UUIDs": self._uuids}, [])
+        self.PropertiesChanged("BluetoothAudioBridge.FakeDbusObject.Device1", {"UUIDs": self._uuids}, [])
 
     PropertiesChanged = signal()
 
@@ -221,6 +220,7 @@ class TestFakeMethods():
         self.bluetoothAudioBridge=bluetoothAudioBridge
         self.bluetoothAudioBridge.DbusBluezBusName = "BluetoothAudioBridge.FakeDbusObject"
         self.bluetoothAudioBridge.DbusBluezObjectPath = "/BluetoothAudioBridge/FakeDbusObject/hci0"
+        self.bluetoothAudioBridge.PollingCycle = 1
         self.fakeDbusDevices = []
         self.fakeDbusAdapter = None
         self.fakeDbusAdapterRegistration = None

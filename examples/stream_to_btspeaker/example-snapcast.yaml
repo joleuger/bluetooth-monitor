@@ -3,5 +3,6 @@
   saveConfigOnExit: true,
   useMqtt: false,
   traceLevel: 0,
+  pollingCycle: 5,
   bluetoothDevices: { "other_a2dp_sinks":  {onConnectCommand: "/usr/bin/python3 /home/audioclient/bluetooth-monitor/pulseaudio-create-loopback.py $DEVICE", onDisconnectCommand: null} },
 }

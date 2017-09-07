@@ -3,6 +3,7 @@
   saveConfigOnExit: true,
   useMqtt: false,
   traceLevel: 0,
+  pollingCycle: 5,
   bluetoothDevices: {"A0_E9_DB_10_3F_B9": {onConnectCommand: "echo $DEVICE connected", onDisconnectCommand: null},
                     "other_a2dp_sinks":  {onConnectCommand: "echo $DEVICE connected", onDisconnectCommand: null} },                  
 }
