@@ -231,6 +231,7 @@ class BluetoothAudioBridge:
            try:
                self.trace(1,"DBUS: GetManagedObjects()")
                managedObjects = await self.loop.run_in_executor(None, lambda: self.DbusBluezRootNode.GetManagedObjects())
+               await asyncio.sleep(0.5)  # give PulseAudio a chance of connecting (not sure if necessary)
                foundDevices={}
                for objPath,obj in managedObjects.items():
                   match = deviceFilter.match(objPath)
