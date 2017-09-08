@@ -43,6 +43,8 @@ mkdir -p /home/audioclient/.config/pulse
 cp /etc/pulse/daemon.conf /home/audioclient/.config/pulse/daemon.conf
 echo "allow-exit = no" >> /home/audioclient/.config/pulse/daemon.conf
 echo "exit-idle-time = -1" >> /home/audioclient/.config/pulse/daemon.conf
+cp etc_security_limits_d_audioclient.conf /etc/security/limits.d/
+
 
 
 # enable virtual pulse device "snapcast". enable bridge from alsa to pulse. install snapcast

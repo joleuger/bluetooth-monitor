@@ -8,6 +8,10 @@ References used for the implementation
 - https://stackoverflow.com/questions/34039588/asyncio-and-infinite-loop
 - https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/adapter-api.txt
 - https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/device-api.txt
+- http://variwiki.com/index.php?title=BlueZ5_and_A2DP
+
+# Note
+Trust => Auto connect
 
 # Tests
 
@@ -19,4 +23,5 @@ Run mosquitto in background when testing mqtt functionality
 - [ ] Auto-reload configurtion
 - [ ] Remote control via MQTT
 - [ ] Status reports via MQTT
-- [ ] Switch to objectmanager for discovery of new devices (https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-objectmanager)
+- [ ] Switch to objectmanager InterfacesAdded and InterfacesRemoved feature
+- [ ] Integrate small web server which allows pairing using a more comfortable interface
