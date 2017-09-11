@@ -1,16 +1,16 @@
 # See /usr/share/doc/libasound2-plugins/README-pulse
 
-pcm.snapcast {
+pcm.virtual {
   type pulse
-  device snapcast
+  device virtual
   
   hint {
     show on
-    description "snapcast device (PulseAudio)"
+    description "virtual device (PulseAudio)"
   }
 }
 
-ctl.snapcast {
+ctl.virtual {
   type pulse
-  device snapcast
+  device virtual
 }

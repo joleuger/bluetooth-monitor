@@ -6,7 +6,7 @@ Type=simple
 StandardOutput=null
 WorkingDirectory=/home/audioclient/bluetooth-monitor
 
-ExecStart=/usr/local/bin/snapclient -s snapcast
+ExecStart=/usr/local/bin/snapclient -s virtual
 
 [Install]
 WantedBy=default.target

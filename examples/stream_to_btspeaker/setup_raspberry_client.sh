@@ -49,7 +49,7 @@ cp etc_security_limits_d_audioclient.conf /etc/security/limits.d/
 
 # enable virtual pulse device "snapcast". enable bridge from alsa to pulse. install snapcast
 #cp /etc/pulse/default.pa /home/audioclient/.config/pulse/default.pa
-#echo load-module module-null-sink rate=44100 channels=2 sink_name=snapcast >> /home/audioclient/.config/pulse/default.pa
+#echo load-module module-null-sink rate=44100 channels=2 sink_name=virtual >> /home/audioclient/.config/pulse/default.pa
 #apt-get install -qy libasound2-plugins
 #cp home_audioclient_.asoundrc /home/audioclient/.asoundrc
 
